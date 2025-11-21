@@ -2,3 +2,6 @@ fastapi==0.121.3
 uvicorn==0.38.0
 sqlalchemy==2.0.44
 psycopg2==2.9.11
+passlib==1.7.4
+fastapi-mail==1.5.8
+dotenv==0.9.9
