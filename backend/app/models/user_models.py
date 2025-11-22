@@ -14,6 +14,7 @@ class UserModel(Base):
     first_name = Column(String(100), nullable=False)
     last_name = Column(String(100), nullable=False)
     email = Column(String(150), unique=True, index=True, nullable=False)
+    profile_image: str = Column(String(255), nullable=True)
     password = Column(String(255), nullable=False)
 
     role = Column(Enum(UserRole), nullable=False)
