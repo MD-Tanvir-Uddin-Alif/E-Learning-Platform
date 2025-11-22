@@ -1,46 +1,77 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Form, FastAPI
 from sqlalchemy.orm import Session
-from schemas.user_schema import UserRegister
 from models.user_models import UserModel, UserRole
 from database_config import get_db
-from uuid import uuid4
-from datetime import datetime, timedelta
 from utils.hash import hash_password
 from utils.send_email import send_verification_email
+from uuid import uuid4
+from datetime import datetime, timedelta
+import shutil
+import os
 
 router = APIRouter()
 
-@router.post("/register")
-async def register_account(request: UserRegister, db: Session = Depends(get_db)):
+# Directory to save profile images
+UPLOAD_DIR = "uploads/profile_images"
+os.makedirs(UPLOAD_DIR, exist_ok=True)
 
-    existing = db.query(UserModel).filter(UserModel.email == request.email).first()
-    if existing:
+@router.post("/register")
+async def register_account(
+    first_name: str = Form(...),
+    last_name: str = Form(...),
+    email: str = Form(...),
+    password: str = Form(...),
+    role: str = Form(...),
+    profile_image: UploadFile = File(None),
+    db: Session = Depends(get_db)
+):
+    # 1️⃣ Check if email already exists
+    existing_user = db.query(UserModel).filter(UserModel.email == email).first()
+    if existing_user:
         raise HTTPException(status_code=400, detail="Email already registered")
 
-    token = str(uuid4())
-    expiry = datetime.utcnow() + timedelta(hours=24)
+    # 2️⃣ Save profile image if provided
+    image_path = None
+    if profile_image:
+        ext = profile_image.filename.split(".")[-1]
+        filename = f"{uuid4()}.{ext}"
+        file_location = f"{UPLOAD_DIR}/{filename}"
 
+        with open(file_location, "wb") as buffer:
+            shutil.copyfileobj(profile_image.file, buffer)
+
+        image_path = file_location  # path to save in DB
+
+    # 3️⃣ Generate email verification token
+    token = str(uuid4())
+    token_expiry = datetime.utcnow() + timedelta(hours=24)
+
+    # 4️⃣ Create new user
     new_user = UserModel(
-        first_name=request.first_name,
-        last_name=request.last_name,
-        email=request.email,
-        password=hash_password(request.password),
-        role=UserRole(request.role.value),
+        first_name=first_name,
+        last_name=last_name,
+        email=email,
+        password=hash_password(password),
+        role=UserRole(role),
+        profile_image=image_path,
         is_verified=False,
         verification_token=token,
-        token_expiry=expiry
+        token_expiry=token_expiry
     )
 
     db.add(new_user)
     db.commit()
     db.refresh(new_user)
 
-    await send_verification_email(new_user.email, token)
+    # 5️⃣ Send verification email
+    await send_verification_email(email, token)
 
     return {"message": "Please check your email to verify your account."}
 
 
-
+# -------------------------------
+# Email Verification Route
+# -------------------------------
 @router.get("/verify-email")
 def verify_email(token: str, db: Session = Depends(get_db)):
     user = db.query(UserModel).filter(UserModel.verification_token == token).first()
@@ -57,3 +88,9 @@ def verify_email(token: str, db: Session = Depends(get_db)):
     db.commit()
 
     return {"message": "Email verified. You can now login."}
+
+
+# -------------------------------
+# Serve uploaded images via URL
+# -------------------------------
+
