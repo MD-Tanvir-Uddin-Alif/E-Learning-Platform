@@ -24,7 +24,7 @@ from database_config import get_db
 
 
 
-router = APIRouter()
+router = APIRouter(tags=["Auth"])
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
 
@@ -110,25 +110,25 @@ def verify_email(token: str, db: Session = Depends(get_db)):
 # -------------------------------
 # User Login Route
 # -------------------------------
-# @router.post("/login")
-# def login(user: UserLogin, db: Session = Depends(get_db)):
-#     db_user = db.query(UserModel).filter(UserModel.email == user.email).first()
-#     if not db_user or not verify_password(user.password, db_user.password):
-#         raise HTTPException(status_code=400, detail="Invalid credentials")
-
-#     token = create_access_token({"user_id": db_user.id, "role": db_user.role.value})
-#     return {"access_token": token, "token_type": "bearer"}
-
-from fastapi.security import OAuth2PasswordRequestForm
-
 @router.post("/login")
-def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
-    db_user = db.query(UserModel).filter(UserModel.email == form_data.username).first()
-    if not db_user or not verify_password(form_data.password, db_user.password):
+def login(user: UserLogin, db: Session = Depends(get_db)):
+    db_user = db.query(UserModel).filter(UserModel.email == user.email).first()
+    if not db_user or not verify_password(user.password, db_user.password):
         raise HTTPException(status_code=400, detail="Invalid credentials")
 
     token = create_access_token({"user_id": db_user.id, "role": db_user.role.value})
     return {"access_token": token, "token_type": "bearer"}
+
+# from fastapi.security import OAuth2PasswordRequestForm
+
+# @router.post("/login")
+# def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
+#     db_user = db.query(UserModel).filter(UserModel.email == form_data.username).first()
+#     if not db_user or not verify_password(form_data.password, db_user.password):
+#         raise HTTPException(status_code=400, detail="Invalid credentials")
+
+#     token = create_access_token({"user_id": db_user.id, "role": db_user.role.value})
+#     return {"access_token": token, "token_type": "bearer"}
 
 
 # -------------------------------

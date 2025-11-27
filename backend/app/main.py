@@ -8,6 +8,7 @@ from database_config import engine, Base
 
 from routes.auth_route import router as auth_route
 from routes.user_route import router as user_route
+from routes.admin_route import router as admin_route
 
 Base.metadata.create_all(bind=engine)
 app = FastAPI()
@@ -15,6 +16,7 @@ app = FastAPI()
 
 app.include_router(auth_route, prefix="/auth")
 app.include_router(user_route, prefix="/user")
+app.include_router(admin_route, prefix="/admin")
 
 app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
 

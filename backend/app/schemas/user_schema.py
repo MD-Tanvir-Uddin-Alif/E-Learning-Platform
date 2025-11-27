@@ -4,6 +4,7 @@ from enum import Enum
 class UserRoleEnum(str, Enum):
     user = "user"
     instructor = "instructor"
+    admin = "admin"
 
 class UserRegister(BaseModel):
     first_name: str
