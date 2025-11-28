@@ -45,7 +45,7 @@ def create_category(
     db: Session = Depends(get_db),
     admin = Depends(admin_required)
 ):
-    # Check duplicate
+    
     existing = db.query(CategoryModel).filter(CategoryModel.name == category_data.name).first()
     if existing:
         raise HTTPException(400, "Category already exists")
@@ -59,3 +59,27 @@ def create_category(
     db.refresh(new_category)
 
     return new_category
+
+
+
+# -------------------------------
+# Update Category
+# -------------------------------
+@router.put("/update-category/{category_id}", response_model=CategoryResponse)
+def update_category(
+    category_id: int,
+    category_data: CategoryCreate,
+    db: Session = Depends(get_db),
+    admin = Depends(admin_required)
+):
+    category = db.query(CategoryModel).filter(CategoryModel.id == category_id).first()
+    if not category:
+        raise HTTPException(404, "Category not found")
+
+    category.name = category_data.name
+    category.description = category_data.description
+
+    db.commit()
+    db.refresh(category)
+
+    return category
