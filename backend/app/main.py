@@ -6,6 +6,7 @@ import os
 from database_config import engine, Base
 
 
+from routes.instructor_route import router as instructor_route
 from routes.public_route import router as public_route
 from routes.admin_route import router as admin_route
 from routes.auth_route import router as auth_route
@@ -15,6 +16,7 @@ Base.metadata.create_all(bind=engine)
 app = FastAPI()
 
 
+app.include_router(instructor_route, prefix="/instructor")
 app.include_router(public_route, prefix="/public")
 app.include_router(admin_route, prefix="/admin")
 app.include_router(auth_route, prefix="/auth")

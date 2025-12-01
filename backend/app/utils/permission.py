@@ -23,3 +23,17 @@ def admin_required(current_user: UserModel = Depends(get_current_user)):
             detail="Only admin can perform this action"
         )
     return current_user
+
+
+
+
+# -------------------------------------------
+# Check is reqest coming from Instructor or not
+# -------------------------------------------
+def instructor_required(current_user: UserModel = Depends(get_current_user)):
+    if current_user.role.value != "instructor":
+        raise HTTPException(
+            status_code=403,
+            detail="Only instructor can perform this action"
+        )
+    return current_user
