@@ -29,6 +29,10 @@ def get_all_categories(db: Session = Depends(get_db)):
     return 
 
 
+
+# -------------------------------
+# Get all Courses
+# -------------------------------
 @router.get("/get-courses", response_model=list[CourseOut])
 def get_all_courses(db: Session = Depends(get_db)):
     return db.query(CourseModel).all()

@@ -13,23 +13,25 @@ class CourseBase(BaseModel):
 
 class CourseCreate(BaseModel):
     title: str
-    description: Optional[str] = None
-    is_paid: bool = False
-    price: Optional[float] = None
+    description: str | None = None
+    is_paid: bool
+    price: float | None = None
     category_id: int
 
 
 class CourseResponse(BaseModel):
     id: int
     title: str
-    description: Optional[str]
+    description: str | None
     is_paid: bool
-    price: Optional[float]
+    price: float | None
     category_id: int
     instructor_id: int
+    image_url: str | None
 
     class Config:
         orm_mode = True
+
 
 
 class VideoOut(BaseModel):
