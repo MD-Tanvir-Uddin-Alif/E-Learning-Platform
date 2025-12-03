@@ -35,20 +35,27 @@ class CourseResponse(BaseModel):
 
 
 class VideoOut(BaseModel):
+    url: Optional[str] = None
+    title: Optional[str] = None
+
+
+class CourseOut(BaseModel):
     id: int
     title: str
-    url: str
-
-    class Config:
-        orm_mode = True
+    videos: list[VideoOut] = []
 
 
-
-class CourseOut(CourseBase):
+class VideoResponse(BaseModel):
     id: int
-    instructor_id: int
-    created_at: datetime
-    videos: List[VideoOut] = []
+    title: str
+    order: int
+    video_url: str
 
     class Config:
         orm_mode = True
+
+
+class MultiVideoResponse(BaseModel):
+    message: str
+    uploaded_count: int
+    videos: list[VideoResponse]
