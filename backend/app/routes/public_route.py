@@ -27,7 +27,7 @@ router = APIRouter(tags=["Public"])
 @router.get("/all-categories", response_model=list[CategoryResponse])
 def get_all_categories(db: Session = Depends(get_db)):
     categories = db.query(CategoryModel).all()
-    return 
+    return categories
 
 
 

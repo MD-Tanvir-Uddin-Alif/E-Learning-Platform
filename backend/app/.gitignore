@@ -1,4 +1,5 @@
 .env
 uploads/videos/*.mp4
+uploads/videos/*
 backend/.venv/
 **/__pycache__/
