@@ -1,25 +1,29 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from typing import List, Optional
-import uuid
-import requests
-import json
+from dotenv import load_dotenv
 from datetime import datetime
+import requests
+import uuid
+import json
+import os
 
 from models.payment_model import PaymentModel, RatingModel
-from models.course_model import CourseModel
 from models.enrollment_model import EnrollmentModel
+from models.course_model import CourseModel
+from .auth_route import get_current_user
 from models.user_models import UserModel
 from database_config import get_db
-from .auth_route import get_current_user
 
 router = APIRouter(tags=["Payment"])
 
-# SSLCommerz Configuration (You need to set these in your environment variables)
-SSLCOMMERZ_STORE_ID = "your_store_id"
-SSLCOMMERZ_STORE_PASSWORD = "your_store_password"
-SSLCOMMERZ_SESSION_API = "https://sandbox.sslcommerz.com/gwprocess/v4/api.php"
-SSLCOMMERZ_VALIDATION_API = "https://sandbox.sslcommerz.com/validator/api/validationserverAPI.php"
+load_dotenv()
+
+# Load Config from .env
+SSLCOMMERZ_STORE_ID = os.getenv("SSLCOMMERZ_STORE_ID")
+SSLCOMMERZ_STORE_PASSWORD = os.getenv("SSLCOMMERZ_STORE_PASSWORD")
+SSLCOMMERZ_SESSION_API = os.getenv("SSLCOMMERZ_SESSION_API")
+SSLCOMMERZ_VALIDATION_API = os.getenv("SSLCOMMERZ_VALIDATION_API")
 
 @router.post("/purchase/{course_id}")
 def initiate_payment(
@@ -27,17 +31,14 @@ def initiate_payment(
     db: Session = Depends(get_db),
     current_user: UserModel = Depends(get_current_user)
 ):
-    """Initiate SSLCommerz payment for a course"""
+    """Handle enrollment for both Free and Paid courses"""
     
-    # Check if course exists and is paid
+    # 1. Check if course exists
     course = db.query(CourseModel).filter(CourseModel.id == course_id).first()
     if not course:
         raise HTTPException(status_code=404, detail="Course not found")
-    
-    if not course.is_paid:
-        raise HTTPException(status_code=400, detail="This course is free")
-    
-    # Check if user is already enrolled
+
+    # 2. Check if user is already enrolled
     existing_enrollment = db.query(EnrollmentModel).filter(
         EnrollmentModel.user_id == current_user.id,
         EnrollmentModel.course_id == course_id
@@ -45,6 +46,29 @@ def initiate_payment(
     
     if existing_enrollment:
         raise HTTPException(status_code=400, detail="You are already enrolled in this course")
+
+    # ======================================================
+    # SCENARIO A: Free Course (Direct Enrollment)
+    # ======================================================
+    if not course.is_paid:
+        # Create enrollment record immediately
+        new_enrollment = EnrollmentModel(
+            user_id=current_user.id,
+            course_id=course_id,
+            enrolled_at=datetime.utcnow()
+        )
+        db.add(new_enrollment)
+        db.commit()
+        
+        return {
+            "status": "success", 
+            "message": "Successfully enrolled in free course",
+            "type": "free_enrollment"
+        }
+
+    # ======================================================
+    # SCENARIO B: Paid Course (SSLCommerz Payment)
+    # ======================================================
     
     # Generate unique transaction ID
     transaction_id = str(uuid.uuid4())
@@ -73,7 +97,8 @@ def initiate_payment(
         'ipn_url': f"http://localhost:8000/payment/ipn/{transaction_id}",
         'cus_name': f"{current_user.first_name} {current_user.last_name}",
         'cus_email': current_user.email,
-        'cus_add1': 'Dhaka',
+        'cus_phone': "01700000000",
+        'cus_add1': 'Dhaka',  # Ideally, get this from user profile if available
         'cus_city': 'Dhaka',
         'cus_country': 'Bangladesh',
         'shipping_method': 'NO',
@@ -90,6 +115,7 @@ def initiate_payment(
             return {
                 "status": "success",
                 "message": "Payment initiated successfully",
+                "type": "payment_redirect",
                 "GatewayPageURL": response_data.get('GatewayPageURL'),
                 "transaction_id": transaction_id
             }
@@ -99,7 +125,14 @@ def initiate_payment(
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Payment gateway error: {str(e)}")
 
-@router.post("/payment/success/{transaction_id}")
+
+
+
+
+
+
+
+@router.post("/success/{transaction_id}")
 def payment_success(
     transaction_id: str,
     db: Session = Depends(get_db)

@@ -23,7 +23,6 @@ from utils.permission import instructor_required
 
 from database_config import get_db
 
-
 router = APIRouter(tags=["Instructor"])
 
 
