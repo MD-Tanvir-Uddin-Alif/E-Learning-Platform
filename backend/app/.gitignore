@@ -5,3 +5,4 @@ uploads/profile_images
 uploads/course_images
 backend/.venv/
 **/__pycache__/
+../.venv/
