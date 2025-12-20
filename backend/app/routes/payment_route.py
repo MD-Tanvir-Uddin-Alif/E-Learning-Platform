@@ -9,7 +9,9 @@ import json
 import os
 
 from models.payment_model import PaymentModel, RatingModel
+from utils.course_completision import is_course_completed
 from models.enrollment_model import EnrollmentModel
+from schemas.rating_schema import RatingSchema
 from models.course_model import CourseModel
 from .auth_route import get_current_user
 from models.user_models import UserModel
@@ -177,6 +179,10 @@ def payment_success(
             
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Payment validation error: {str(e)}")
+    
+
+
+
 
 @router.post("/payment/fail/{transaction_id}")
 def payment_fail(
@@ -220,17 +226,26 @@ def payment_ipn(
     # Process IPN notification (implement based on SSLCommerz documentation)
     return {"status": "received"}
 
+
+
+# ==========================================
+# RATING ROUTES (UPDATED)
+# ==========================================
+
 @router.post("/courses/{course_id}/rate")
 def add_rating(
     course_id: int,
-    rating: int,
-    comment: Optional[str] = None,
+    rating_data: RatingSchema, # <--- CHANGED: Now accepts JSON Body
     db: Session = Depends(get_db),
     current_user: UserModel = Depends(get_current_user)
 ):
-    """Add rating and comment for a course (only for enrolled students)"""
+    """Add rating - Enforces Course Completion Rule"""
     
-    # Check if user is enrolled in the course
+    # Extract data from schema
+    rating = rating_data.rating
+    comment = rating_data.comment
+
+    # 1. Check Enrollment
     enrollment = db.query(EnrollmentModel).filter(
         EnrollmentModel.user_id == current_user.id,
         EnrollmentModel.course_id == course_id
@@ -239,7 +254,7 @@ def add_rating(
     if not enrollment:
         raise HTTPException(status_code=403, detail="You must be enrolled in this course to rate it")
     
-    # Check if user has already rated this course
+    # 2. Check Previous Rating
     existing_rating = db.query(RatingModel).filter(
         RatingModel.user_id == current_user.id,
         RatingModel.course_id == course_id
@@ -247,12 +262,19 @@ def add_rating(
     
     if existing_rating:
         raise HTTPException(status_code=400, detail="You have already rated this course")
+
+    # 3. CRITICAL: Enforce Completion Check
+    if not is_course_completed(db, current_user.id, course_id):
+         raise HTTPException(
+             status_code=403, 
+             detail="You must complete 100% of the course videos before rating."
+         )
     
-    # Validate rating
+    # 4. Validate Rating
     if not 1 <= rating <= 5:
         raise HTTPException(status_code=400, detail="Rating must be between 1 and 5")
     
-    # Create rating
+    # 5. Save Rating
     new_rating = RatingModel(
         user_id=current_user.id,
         course_id=course_id,
@@ -270,7 +292,6 @@ def get_course_ratings(
     db: Session = Depends(get_db)
 ):
     """Get all ratings for a course"""
-    
     ratings = db.query(RatingModel).filter(RatingModel.course_id == course_id).all()
     
     result = []
@@ -282,7 +303,6 @@ def get_course_ratings(
             "comment": rating.comment,
             "created_at": rating.created_at
         })
-    
     return {"ratings": result}
 
 @router.get("/courses/{course_id}/rating-summary")
@@ -291,7 +311,6 @@ def get_course_rating_summary(
     db: Session = Depends(get_db)
 ):
     """Get rating summary for a course"""
-    
     from sqlalchemy import func
     
     ratings = db.query(RatingModel).filter(RatingModel.course_id == course_id).all()

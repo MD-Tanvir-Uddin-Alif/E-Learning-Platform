@@ -1,16 +1,21 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
+from sqlalchemy import func
 from typing import List
 
 from models.video_progress_model import VideoProgressModel
-from models.video_model import VideoModel
+from utils.course_completision import is_course_completed
 from models.enrollment_model import EnrollmentModel
-from models.course_model import CourseModel
-from database_config import get_db
 from routes.auth_route import get_current_user
+from models.payment_model import RatingModel
+from models.course_model import CourseModel
+from models.video_model import VideoModel
 from models.user_models import UserModel
+from database_config import get_db
+
 
 router = APIRouter(tags=["Video Progress"])
+
 
 @router.post("/videos/{video_id}/progress")
 def update_video_progress(
@@ -21,23 +26,21 @@ def update_video_progress(
 ):
     """Update video watch progress for current user"""
     
-    # Get video and course info
+    # Get video info
     video = db.query(VideoModel).filter(VideoModel.id == video_id).first()
     if not video:
         raise HTTPException(status_code=404, detail="Video not found")
     
-    course_id = video.course_id
-    
-    # Check if user is enrolled in the course
+    # Check enrollment
     enrollment = db.query(EnrollmentModel).filter(
         EnrollmentModel.user_id == current_user.id,
-        EnrollmentModel.course_id == course_id
+        EnrollmentModel.course_id == video.course_id
     ).first()
     
     if not enrollment:
         raise HTTPException(status_code=403, detail="You must be enrolled in this course")
     
-    # Update or create progress record
+    # Update or Create Progress
     progress = db.query(VideoProgressModel).filter(
         VideoProgressModel.user_id == current_user.id,
         VideoProgressModel.video_id == video_id
@@ -45,22 +48,20 @@ def update_video_progress(
     
     if progress:
         progress.watched = watched
-        progress.watch_date = db.func.now()
+        progress.watch_date = func.now()
     else:
         progress = VideoProgressModel(
             user_id=current_user.id,
+            course_id=video.course_id, # Storing course_id helps with faster queries later
             video_id=video_id,
-            watched=watched
+            watched=watched,
+            watch_date=func.now()
         )
         db.add(progress)
     
     db.commit()
     
-    return {
-        "status": "success",
-        "message": "Video progress updated",
-        "watched": watched
-    }
+    return {"status": "success", "watched": watched}
 
 @router.get("/courses/{course_id}/progress")
 def get_course_progress(
@@ -68,106 +69,7 @@ def get_course_progress(
     db: Session = Depends(get_db),
     current_user: UserModel = Depends(get_current_user)
 ):
-    """Get video progress for a specific course"""
-    
-    # Check if user is enrolled
-    enrollment = db.query(EnrollmentModel).filter(
-        EnrollmentModel.user_id == current_user.id,
-        EnrollmentModel.course_id == course_id
-    ).first()
-    
-    if not enrollment:
-        raise HTTPException(status_code=403, detail="You must be enrolled in this course")
-    
-    # Get all videos for the course
-    videos = db.query(VideoModel).filter(VideoModel.course_id == course_id).all()
-    
-    # Get user's progress for these videos
-    video_ids = [video.id for video in videos]
-    progress_records = db.query(VideoProgressModel).filter(
-        VideoProgressModel.user_id == current_user.id,
-        VideoProgressModel.video_id.in_(video_ids)
-    ).all()
-    
-    # Create progress map
-    progress_map = {p.video_id: p.watched for p in progress_records}
-    
-    # Calculate completion percentage
-    total_videos = len(videos)
-    watched_videos = sum(1 for video in videos if progress_map.get(video.id, False))
-    completion_percentage = (watched_videos / total_videos * 100) if total_videos > 0 else 0
-    
-    # Check if course is completed (all videos watched)
-    course_completed = watched_videos == total_videos and total_videos > 0
-    
-    return {
-        "course_id": course_id,
-        "total_videos": total_videos,
-        "watched_videos": watched_videos,
-        "completion_percentage": round(completion_percentage, 2),
-        "course_completed": course_completed,
-        "videos": [
-            {
-                "id": video.id,
-                "title": video.title,
-                "watched": progress_map.get(video.id, False)
-            }
-            for video in videos
-        ]
-    }
-
-@router.get("/courses/completed")
-def get_completed_courses(
-    db: Session = Depends(get_db),
-    current_user: UserModel = Depends(get_current_user)
-):
-    """Get all courses completed by the user"""
-    
-    # Get all enrolled courses
-    enrollments = db.query(EnrollmentModel).filter(
-        EnrollmentModel.user_id == current_user.id
-    ).all()
-    
-    completed_courses = []
-    
-    for enrollment in enrollments:
-        course_id = enrollment.course_id
-        
-        # Get course progress
-        course = db.query(CourseModel).filter(CourseModel.id == course_id).first()
-        if not course:
-            continue
-        
-        # Get all videos for the course
-        videos = db.query(VideoModel).filter(VideoModel.course_id == course_id).all()
-        
-        if not videos:
-            continue
-        
-        # Check if all videos are watched
-        video_ids = [video.id for video in videos]
-        watched_count = db.query(VideoProgressModel).filter(
-            VideoProgressModel.user_id == current_user.id,
-            VideoProgressModel.video_id.in_(video_ids),
-            VideoProgressModel.watched == True
-        ).count()
-        
-        if watched_count == len(videos):
-            completed_courses.append({
-                "id": course.id,
-                "title": course.title,
-                "completed_date": enrollment.enrolled_at
-            })
-    
-    return {"completed_courses": completed_courses}
-
-@router.get("/courses/{course_id}/can-rate")
-def can_rate_course(
-    course_id: int,
-    db: Session = Depends(get_db),
-    current_user: UserModel = Depends(get_current_user)
-):
-    """Check if user can rate a course (must be enrolled and completed)"""
+    """Get detailed progress for a course"""
     
     # Check enrollment
     enrollment = db.query(EnrollmentModel).filter(
@@ -176,48 +78,67 @@ def can_rate_course(
     ).first()
     
     if not enrollment:
-        return {
-            "can_rate": False,
-            "reason": "You must be enrolled in this course to rate it"
-        }
+        raise HTTPException(status_code=403, detail="Not enrolled")
     
-    # Get all videos for the course
-    videos = db.query(VideoModel).filter(VideoModel.course_id == course_id).all()
+    videos = db.query(VideoModel).filter(VideoModel.course_id == course_id).order_by(VideoModel.order).all()
     
-    if not videos:
-        return {
-            "can_rate": False,
-            "reason": "This course has no videos to complete"
-        }
-    
-    # Check if all videos are watched
-    video_ids = [video.id for video in videos]
-    watched_count = db.query(VideoProgressModel).filter(
+    # Get watched status efficiently
+    progress_records = db.query(VideoProgressModel).filter(
         VideoProgressModel.user_id == current_user.id,
-        VideoProgressModel.video_id.in_(video_ids),
-        VideoProgressModel.watched == True
-    ).count()
+        VideoProgressModel.course_id == course_id
+    ).all()
     
-    if watched_count < len(videos):
-        return {
-            "can_rate": False,
-            "reason": f"You must complete all videos to rate this course ({watched_count}/{len(videos)} watched)"
-        }
+    # Convert to a set of watched video IDs for fast lookup
+    watched_video_ids = {p.video_id for p in progress_records if p.watched}
     
-    # Check if already rated
-    from models.payment_model import RatingModel
-    existing_rating = db.query(RatingModel).filter(
+    total = len(videos)
+    watched = len(watched_video_ids)
+    percentage = (watched / total * 100) if total > 0 else 0
+    
+    video_list = []
+    for vid in videos:
+        video_list.append({
+            "id": vid.id,
+            "title": vid.title,
+            "order": vid.order,
+            "watched": vid.id in watched_video_ids
+        })
+        
+    return {
+        "course_id": course_id,
+        "total_videos": total,
+        "watched_videos": watched,
+        "completion_percentage": round(percentage, 2),
+        "is_completed": watched == total and total > 0,
+        "videos": video_list
+    }
+
+@router.get("/courses/{course_id}/can-rate")
+def can_rate_course(
+    course_id: int,
+    db: Session = Depends(get_db),
+    current_user: UserModel = Depends(get_current_user)
+):
+    """Check if user is allowed to rate"""
+    
+    # 1. Enrolled?
+    enrollment = db.query(EnrollmentModel).filter(
+        EnrollmentModel.user_id == current_user.id,
+        EnrollmentModel.course_id == course_id
+    ).first()
+    if not enrollment:
+        return {"can_rate": False, "reason": "Not enrolled"}
+
+    # 2. Already Rated?
+    rating = db.query(RatingModel).filter(
         RatingModel.user_id == current_user.id,
         RatingModel.course_id == course_id
     ).first()
-    
-    if existing_rating:
-        return {
-            "can_rate": False,
-            "reason": "You have already rated this course"
-        }
-    
-    return {
-        "can_rate": True,
-        "reason": "You can rate this course"
-    }
+    if rating:
+        return {"can_rate": False, "reason": "Already rated"}
+
+    # 3. Completed?
+    if is_course_completed(db, current_user.id, course_id):
+        return {"can_rate": True, "reason": "Eligible"}
+    else:
+        return {"can_rate": False, "reason": "Course not completed"}

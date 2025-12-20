@@ -18,7 +18,7 @@ if config.config_file_name is not None:
 # for 'autogenerate' support
 # from myapp import mymodel
 # target_metadata = mymodel.Base.metadata
-from models import user_models, category_model, course_model, video_model, video_progress_model, enrollment_model
+from models import user_models, category_model, course_model, video_model, video_progress_model, enrollment_model, payment_model
 from database_config import Base
 target_metadata = Base.metadata
 
