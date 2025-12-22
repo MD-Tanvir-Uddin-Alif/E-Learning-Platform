@@ -1,16 +1,17 @@
 import React from 'react'
+import { Link } from 'react-router-dom'
 
 const Navbar = () => {
   return (
     <nav className="sticky top-0 z-50 w-full border-b border-[#ebdcc1] px-4 py-3 shadow-sm" style={{ backgroundColor: 'rgba(245, 231, 198, 0.95)', backdropFilter: 'blur(8px)' }}>
       <div className="mx-auto flex max-w-7xl items-center justify-between">
         <div className="flex items-center gap-8">
-          <a href="#" className="flex items-center gap-3 group">
+          <Link to="/" className="flex items-center gap-3 group">
             <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#FF6D1F] text-white shadow-md transition-transform group-hover:scale-105">
               <span className="material-symbols-outlined text-[24px]">school</span>
             </div>
             <span className="text-xl font-bold tracking-tight">Skill<span className="text-[#FF6D1F]">Forge</span></span>
-          </a>
+          </Link>
           
           <div className="hidden items-center gap-8 md:flex">
             <a href="#" className="text-sm font-medium hover:text-[#FF6D1F] transition-colors">Courses</a>
@@ -28,7 +29,7 @@ const Navbar = () => {
           
           <div className="flex items-center gap-3">
             <button className="hidden rounded-full px-5 py-2 text-sm font-semibold hover:bg-[#FAF3E1]/50 transition-colors md:block">Log In</button>
-            <button className="flex items-center justify-center rounded-full bg-[#FF6D1F] px-5 py-2 text-sm font-bold text-white shadow-md transition-transform hover:scale-105 active:scale-95">Sign Up</button>
+            <Link to="/registration" className="flex items-center justify-center rounded-full bg-[#FF6D1F] px-5 py-2 text-sm font-bold text-white shadow-md transition-transform hover:scale-105 active:scale-95">Sign Up</Link>
           </div>
         </div>
       </div>
