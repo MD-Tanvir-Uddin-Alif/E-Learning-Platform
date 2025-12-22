@@ -14,9 +14,9 @@ import os
 # Import Frm Files
 # -------------------------------
 from utils.jwt import create_access_token, decode_access_token
-from schemas.password_schema import ChangePasswordModel
+from schemas.password_schema import ChangePasswordModel, ForgotPasswordModel, ResetPasswordModel
 from utils.hash import hash_password, verify_password
-from utils.send_email import send_verification_email
+from utils.send_email import send_verification_email, send_reset_password_email
 from models.user_models import UserModel, UserRole
 from schemas.user_schema import UserLogin
 from database_config import get_db
@@ -171,3 +171,62 @@ def change_password(
     db.commit()
     
     return {"message": "Password changed successfully"}
+
+
+
+# -------------------------------
+# NEW ROUTE 2: Forgot Password (Unauthenticated)
+# -------------------------------
+@router.post("/forgot-password")
+async def forgot_password(
+    data: ForgotPasswordModel,
+    db: Session = Depends(get_db)
+):
+    # 1. Find user
+    user = db.query(UserModel).filter(UserModel.email == data.email).first()
+    if not user:
+        # Security: Don't reveal if email exists or not
+        return {"message": "If this email is registered, you will receive a reset link."}
+    
+    # 2. Generate Reset Token (Reusing verification fields for simplicity)
+    reset_token = str(uuid4())
+    user.verification_token = reset_token
+    user.token_expiry = datetime.utcnow() + timedelta(hours=1) # Token valid for 1 hour
+    db.commit()
+    
+    # 3. Send Email
+    try:
+        await send_reset_password_email(user.email, reset_token)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail="Failed to send email")
+        
+    return {"message": "If this email is registered, you will receive a reset link."}
+
+
+# -------------------------------
+# NEW ROUTE 3: Reset Password (Unauthenticated)
+# -------------------------------
+@router.post("/reset-password")
+def reset_password(
+    data: ResetPasswordModel,
+    db: Session = Depends(get_db)
+):
+    # 1. Find user by token
+    user = db.query(UserModel).filter(UserModel.verification_token == data.token).first()
+    
+    if not user:
+        raise HTTPException(status_code=400, detail="Invalid or expired token")
+        
+    # 2. Check Expiry
+    if user.token_expiry and datetime.utcnow() > user.token_expiry:
+        raise HTTPException(status_code=400, detail="Token has expired")
+        
+    # 3. Set New Password
+    user.password = hash_password(data.new_password)
+    
+    # 4. Clear token
+    user.verification_token = None
+    user.token_expiry = None
+    db.commit()
+    
+    return {"message": "Password reset successfully. You can now login."}
