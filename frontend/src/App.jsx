@@ -4,6 +4,7 @@ import MainLayout from './components/Layout/MainLayout'
 import NavOnlyLayout from './components/Layout/NavOnlyLayout';
 import Home from './pages/Home'
 import Register from './features/auth/Register';
+import Login from './features/auth/Login';
 
 const router = createBrowserRouter([
   /* navbar + footer */
@@ -19,6 +20,7 @@ const router = createBrowserRouter([
     element: <NavOnlyLayout />,
     children: [
       { path: 'registration', element: <Register/> },
+      { path: 'login', element: <Login/> },
     ],
   },
 

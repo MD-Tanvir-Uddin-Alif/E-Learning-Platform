@@ -28,7 +28,7 @@ const Navbar = () => {
           </div>
           
           <div className="flex items-center gap-3">
-            <button className="hidden rounded-full px-5 py-2 text-sm font-semibold hover:bg-[#FAF3E1]/50 transition-colors md:block">Log In</button>
+            <Link to="/login" className="hidden rounded-full px-5 py-2 text-sm font-semibold hover:bg-[#FAF3E1]/50 transition-colors md:block">Log In</Link>
             <Link to="/registration" className="flex items-center justify-center rounded-full bg-[#FF6D1F] px-5 py-2 text-sm font-bold text-white shadow-md transition-transform hover:scale-105 active:scale-95">Sign Up</Link>
           </div>
         </div>

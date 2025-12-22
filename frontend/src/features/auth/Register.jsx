@@ -1,5 +1,6 @@
 // src/components/Register.jsx
 import React from 'react';
+import { Link } from 'react-router-dom';
 
 const Register = () => (
   <>
@@ -172,7 +173,7 @@ const Register = () => (
               <span className="material-symbols-outlined">arrow_forward</span>
             </button>
             <p className="text-center text-sm text-[#a16545]">
-              Already have an account? <a href="#" className="text-[#ff6d1f] font-bold hover:underline">Log in</a>
+              Already have an account? <Link to="/login" className="text-[#ff6d1f] font-bold hover:underline">Log in</Link>
             </p>
           </form>
 
