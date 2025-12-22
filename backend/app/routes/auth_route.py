@@ -14,6 +14,7 @@ import os
 # Import Frm Files
 # -------------------------------
 from utils.jwt import create_access_token, decode_access_token
+from schemas.password_schema import ChangePasswordModel
 from utils.hash import hash_password, verify_password
 from utils.send_email import send_verification_email
 from models.user_models import UserModel, UserRole
@@ -146,3 +147,27 @@ def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(
         return user
     except Exception:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token")
+
+
+
+
+
+
+# -------------------------------
+# NEW ROUTE 1: Change Password (Authenticated)
+# -------------------------------
+@router.post("/change-password")
+def change_password(
+    data: ChangePasswordModel,
+    db: Session = Depends(get_db),
+    current_user: UserModel = Depends(get_current_user)
+):
+    # 1. Verify old password
+    if not verify_password(data.old_password, current_user.password):
+        raise HTTPException(status_code=400, detail="Incorrect old password")
+    
+    # 2. Hash new password and update
+    current_user.password = hash_password(data.new_password)
+    db.commit()
+    
+    return {"message": "Password changed successfully"}
