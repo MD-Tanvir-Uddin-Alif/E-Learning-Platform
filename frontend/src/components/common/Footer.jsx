@@ -44,7 +44,7 @@ const Footer = () => {
         </div>
         
         <div className="flex flex-col items-center justify-between gap-4 py-8 md:flex-row">
-          <p className="text-sm text-[#222222]/50">© 2024 SkillForge Inc. All rights reserved.</p>
+          <p className="text-sm text-[#222222]/50">© 2025 SkillForge Inc. All rights reserved.</p>
           <div className="flex gap-6 text-[#222222]/50">
             <a href="#" className="hover:text-[#FF6D1F]"><span className="sr-only">Facebook</span>FB</a>
             <a href="#" className="hover:text-[#FF6D1F]"><span className="sr-only">Twitter</span>TW</a>

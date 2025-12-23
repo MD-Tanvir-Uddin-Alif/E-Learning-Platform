@@ -5,6 +5,7 @@ import NavOnlyLayout from './components/Layout/NavOnlyLayout';
 import Home from './pages/Home'
 import Register from './features/auth/Register';
 import Login from './features/auth/Login';
+import ForgotPassword from './features/auth/ForgotPassword';
 
 const router = createBrowserRouter([
   /* navbar + footer */
@@ -24,8 +25,8 @@ const router = createBrowserRouter([
     ],
   },
 
-  // /* nothing (login page) */
-  // { path: 'login', element: <Login /> },
+  /* nothing (login page) */
+  { path: 'forgotpassword', element: <ForgotPassword /> },
 ]);
 
 function App() {

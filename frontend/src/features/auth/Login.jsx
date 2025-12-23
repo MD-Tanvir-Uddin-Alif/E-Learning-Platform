@@ -59,7 +59,7 @@ const Login = () => {
                 <input type="checkbox" className="checkbox-custom h-5 w-5 rounded border-2 border-[#F5E7C6] bg-transparent text-[#ff6d1f] focus:ring-0 focus:ring-offset-0 focus:border-[#ff6d1f] transition-colors cursor-pointer group-hover:border-[#ff6d1f]/50" />
                 <span className="text-sm text-[#222222] font-medium">Remember me</span>
               </label>
-              <a href="#" className="text-sm font-semibold text-[#ff6d1f] hover:underline hover:text-[#ff6d1f]/80 transition-colors">Forgot Password?</a>
+              <Link to="/forgotpassword" className="text-sm font-semibold text-[#ff6d1f] hover:underline hover:text-[#ff6d1f]/80 transition-colors">Forgot Password?</Link>
             </div>
 
             {/* Submit */}
@@ -100,7 +100,7 @@ const Login = () => {
 
     {/* Simple Footer */}
     <footer className="relative z-10 py-6 text-center text-[#222222]/60 text-xs">
-      <p>© 2024 EduLearn Inc. All rights reserved. | <a className="hover:text-[#ff6d1f]" href="#">Privacy Policy</a></p>
+      <p>© 2025 EduLearn Inc. All rights reserved. | <a className="hover:text-[#ff6d1f]" href="#">Privacy Policy</a></p>
     </footer>
     </>
   )
