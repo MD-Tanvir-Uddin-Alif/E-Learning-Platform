@@ -6,6 +6,7 @@ import Home from './pages/Home'
 import Register from './features/auth/Register';
 import Login from './features/auth/Login';
 import ForgotPassword from './features/auth/ForgotPassword';
+import EmailVerification from './features/auth/EmailVerification';
 
 const router = createBrowserRouter([
   /* navbar + footer */
@@ -22,10 +23,12 @@ const router = createBrowserRouter([
     children: [
       { path: 'registration', element: <Register/> },
       { path: 'login', element: <Login/> },
+      { path: 'verify-email', element: <EmailVerification/>},
+
     ],
   },
 
-  /* nothing (login page) */
+  /* nothing */
   { path: 'forgotpassword', element: <ForgotPassword /> },
 ]);
 

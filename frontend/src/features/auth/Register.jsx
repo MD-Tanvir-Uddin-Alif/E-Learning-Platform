@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState} from 'react';
 import { useMutation } from '@tanstack/react-query';
 import { registerUser } from '../../api/auth';
 import { Link, useNavigate } from 'react-router-dom';
@@ -8,18 +8,29 @@ const Register = () => {
   const [role, setRole] = useState('user');
   const [file, setFile] = useState(null);
 
+
+
   const { mutate, isPending, error, isSuccess } = useMutation({
     mutationFn: registerUser,
-    onSuccess: () => navigate('/login'),
+    // onSuccess: () => navigate('/verify-email', { state: { email: emailRef.current } }),
   });
 
   const handleSubmit = (e) => {
-    e.preventDefault();
-    const fd = new FormData(e.target);
-    fd.set('role', role);
-    if (file) fd.set('profile_image', file);
-    mutate(fd);
-  };
+  e.preventDefault();
+
+  const fd = new FormData(e.target);
+  const email = fd.get('email'); 
+
+  fd.set('role', role);
+  if (file) fd.set('profile_image', file);
+
+  mutate(fd, {
+    onSuccess: () => {
+      navigate('/verify-email', { state: { email } });
+    },
+  });
+};
+
 
   return (
     <>
@@ -38,7 +49,7 @@ const Register = () => {
           </div>
 
           {/* error banner */}
-          {error && (
+          {error && !isSuccess &&(
             <div className="bg-red-100 text-red-700 rounded-lg p-3 text-sm">{error.response?.data?.detail || 'Registration failed'}</div>
           )}
           {isSuccess && (
