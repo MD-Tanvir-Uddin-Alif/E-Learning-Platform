@@ -1,7 +1,7 @@
-import { api } from './axios';
+import { api, apiMultipart } from './axios';
 
 export const registerUser = (formData) =>
-  api.post('auth/register', formData)
+  apiMultipart.post('/auth/register', formData)
      .then((r) => r.data)
      .catch((err) => {
        console.log('---- axios error ----');
@@ -10,3 +10,8 @@ export const registerUser = (formData) =>
        console.log('headers:', err.response?.headers);
        throw err;
      });
+
+
+
+export const loginUser = (credentials) =>
+  api.post('/auth/login', credentials).then((r) => r.data);
