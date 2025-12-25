@@ -1,6 +1,7 @@
 from fastapi import FastAPI
 from contextlib import asynccontextmanager
 from fastapi.staticfiles import StaticFiles
+from fastapi.middleware.cors import CORSMiddleware
 import os
 
 from database_config import engine, Base
@@ -15,6 +16,18 @@ from routes.user_route import router as user_route
 
 Base.metadata.create_all(bind=engine)
 app = FastAPI()
+
+
+
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:5173"], 
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 
 app.include_router(video_progress_route, prefix="/progress")
 app.include_router(instructor_route, prefix="/instructor")
