@@ -8,6 +8,7 @@ import Login from './features/auth/Login';
 import ForgotPassword from './features/auth/ForgotPassword';
 import EmailVerification from './features/auth/EmailVerification';
 import Profile from './pages/Profile';
+import ProtectedRoute from './components/Layout/ProtectedRoute';
 
 const router = createBrowserRouter([
   /* navbar + footer */
@@ -25,7 +26,7 @@ const router = createBrowserRouter([
       { path: 'registration', element: <Register/> },
       { path: 'login', element: <Login/> },
       { path: 'verify-email', element: <EmailVerification/> },
-      { path: 'profile', element: <Profile/> }
+      { path: 'profile', element: <ProtectedRoute><Profile/></ProtectedRoute> }
     ],
   },
 
