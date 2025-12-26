@@ -8,12 +8,33 @@ const Login = () => {
   const [showPwd, setShowPwd] = useState(false);
   const [formData, setFormData] = useState({ email: '', password: '' });
 
-  const { mutate, isPending, error } = useMutation({
+  // --- Toast State ---
+  const [toast, setToast] = useState(null); // { type: 'success'|'error'|'info', title: '', message: '' }
+
+  // --- Helpers ---
+  const showToast = (type, title, message) => {
+    setToast({ type, title, message });
+    // Auto-dismiss after 4 seconds
+    setTimeout(() => setToast(null), 4000);
+  };
+
+  const closeToast = () => setToast(null);
+
+  const { mutate, isPending } = useMutation({
     mutationFn: loginUser,
     onSuccess: (data) => {
       localStorage.setItem('token', data.access_token);
-      navigate('/profile');
+      showToast('success', 'Welcome Back', 'Login successful! Redirecting to profile...');
+      
+      // Small delay to allow the user to see the success toast before redirecting
+      setTimeout(() => {
+        navigate('/profile');
+      }, 1500);
     },
+    onError: (err) => {
+      const errorMsg = err.response?.data?.detail || 'Please check your email and password.';
+      showToast('error', 'Login Failed', errorMsg);
+    }
   });
 
   const handleSubmit = (e) => {
@@ -21,16 +42,76 @@ const Login = () => {
     mutate(formData);
   };
 
+  // --- Render Toast Component ---
+  const renderToast = () => {
+    if (!toast) return null;
+
+    let icon = '';
+    let barColorClass = '';
+    // Determine icon and color based on type
+    if (toast.type === 'success') {
+      icon = 'check';
+      barColorClass = 'bg-[#FF6D1F]'; // Brand Orange
+    } else if (toast.type === 'error') {
+      icon = 'priority_high';
+      barColorClass = 'bg-red-500'; 
+    } else {
+      icon = 'info';
+      barColorClass = 'bg-blue-500';
+    }
+
+    return (
+      <div className="fixed top-5 right-5 z-50 animate-[slideDown_0.3s_ease-out]">
+        <div className="pointer-events-auto relative w-[320px] overflow-hidden rounded-xl bg-[#F5E7C6] shadow-xl transition-transform hover:-translate-y-1 duration-300 group border border-[#ead7cd]">
+          <div className="flex items-start gap-3 p-4 pr-10">
+            {/* Icon Circle */}
+            <div 
+              className={`flex size-6 shrink-0 items-center justify-center rounded-full text-white ${toast.type === 'error' ? 'bg-red-500' : toast.type === 'info' ? 'bg-blue-500' : 'bg-[#FF6D1F]'}`}
+            >
+              <span className="material-symbols-outlined text-[16px] font-bold">{icon}</span>
+            </div>
+            {/* Content */}
+            <div className="flex flex-col gap-1">
+              <h3 className="font-display text-sm font-semibold text-[#222222]">{toast.title}</h3>
+              <p className="font-display text-xs text-[#222222]/80 leading-normal">{toast.message}</p>
+            </div>
+            {/* Close Button */}
+            <button 
+              onClick={closeToast}
+              className="absolute right-3 top-3 flex items-center justify-center text-[#222222]/40 transition-colors hover:text-[#FF6D1F]"
+            >
+              <span className="material-symbols-outlined text-[16px]">close</span>
+            </button>
+          </div>
+          {/* Progress Bar Decoration */}
+          <div className="h-[3px] w-full bg-[#FAF3E1]">
+            <div className={`h-full w-full ${barColorClass}`}></div>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   return (
     <>
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Lexend:wght@100..900&display=swap');
         @import url('https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght@100..700&display=swap');
-        .material-symbols-outlined{font-variation-settings:'FILL'0,'wght'400,'GRAD'0,'opsz'24;}
-        .floating-input:placeholder-shown+label{top:50%;transform:translateY(-50%);font-size:1rem;color:#6b7280;}
-        .floating-input:not(:placeholder-shown)+label,.floating-input:focus+label{top:0;transform:translateY(-50%)scale(.85);color:#ff6d1f;}
-        .checkbox-custom:checked{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg'viewBox='0 0 16 16'%3E%3Cpath fill='white'd='M12.207 4.793a1 1 0 010 1.414l-5 5a1 1 0 01-1.414 0l-2-2a1 1 0 011.414-1.414L6.5 9.086l4.293-4.293a1 1 0 011.414 0z'/%3E%3C/svg%3E");background-color:#ff6d1f;border-color:#ff6d1f;}
+        
+        .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+        .floating-input:placeholder-shown+label { top: 50%; transform: translateY(-50%); font-size: 1rem; color: #6b7280; }
+        .floating-input:not(:placeholder-shown)+label, .floating-input:focus+label { top: 0; transform: translateY(-50%) scale(.85); color: #ff6d1f; }
+        .checkbox-custom:checked { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath fill='white' d='M12.207 4.793a1 1 0 010 1.414l-5 5a1 1 0 01-1.414 0l-2-2a1 1 0 011.414-1.414L6.5 9.086l4.293-4.293a1 1 0 011.414 0z'/%3E%3C/svg%3E"); background-color: #ff6d1f; border-color: #ff6d1f; }
+
+        /* Animation for Toast (Slide Down since it's at the top on Login usually looks better, but consistent slideUp is fine too. Let's do SlideDown for top positioning) */
+        @keyframes slideDown {
+          from { transform: translateY(-100%); opacity: 0; }
+          to { transform: translateY(0); opacity: 1; }
+        }
       `}</style>
+
+      {/* Render Toast Container */}
+      {renderToast()}
 
       <div className="min-h-screen flex flex-col relative bg-[#FAF3E1] text-[#222222] font-['Lexend'] overflow-hidden">
         <div className="absolute inset-0 z-0 pointer-events-none opacity-20" style={{backgroundImage:'radial-gradient(#F5E7C6 2px, transparent 2px), radial-gradient(#F5E7C6 2px, transparent 2px)',backgroundSize:'40px 40px',backgroundPosition:'0 0,20px 20px'}}></div>
@@ -43,8 +124,8 @@ const Login = () => {
               <p className="text-[#222222]/70 text-sm">Please enter your details to sign in.</p>
             </div>
 
-            {error && <div className="bg-red-100 text-red-700 rounded-lg p-3 text-sm mb-4">{error.response?.data?.detail || 'Login failed'}</div>}
-
+            {/* Replaced static error div with the Toast logic in mutation callbacks */}
+            
             <form onSubmit={handleSubmit} className="space-y-6">
               <div className="relative">
                 <input id="email" name="email" type="email" required placeholder=" " value={formData.email} onChange={(e) => setFormData({...formData, email: e.target.value})} className="floating-input block px-4 pb-2.5 pt-5 w-full text-base text-[#222222] bg-[#FAF3E1] rounded-lg border border-[#F5E7C6] appearance-none focus:outline-none focus:ring-0 focus:border-[#ff6d1f] peer transition-colors h-14"/>
