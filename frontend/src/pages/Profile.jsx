@@ -2,10 +2,10 @@
 import React, { useEffect, useState, useRef } from 'react';
 import axios from 'axios'; // Import axios for the preview version
 
+
 import { getMyProfile, updateProfile, changePassword } from '../api/auth';
 
 const API_BASE_URL = 'http://127.0.0.1:8000';
-
 
 const getImageUrl = (path) => {
   if (!path) return "https://via.placeholder.com/150";
@@ -18,7 +18,6 @@ const getImageUrl = (path) => {
 };
 
 const Profile = () => {
-
   // --- State Management ---
   const [user, setUser] = useState({
     first_name: '',
@@ -31,8 +30,7 @@ const Profile = () => {
   });
   
   const [passwords, setPasswords] = useState({
-    // UPDATED: Renamed 'current_password' to 'old_password' to match backend Pydantic model
-    old_password: '',
+    old_password: '', // Matches backend Pydantic model
     new_password: ''
   });
 
@@ -41,9 +39,20 @@ const Profile = () => {
   const [saving, setSaving] = useState(false);
   const [passLoading, setPassLoading] = useState(false);
   const [previewImage, setPreviewImage] = useState(null);
-  const [statusMsg, setStatusMsg] = useState({ type: '', text: '' });
+
+  // Toast State
+  const [toast, setToast] = useState(null); // { type: 'success'|'error'|'info', title: '', message: '' }
 
   const fileInputRef = useRef(null);
+
+  // --- Helpers ---
+  const showToast = (type, title, message) => {
+    setToast({ type, title, message });
+    // Auto-dismiss after 4 seconds
+    setTimeout(() => setToast(null), 4000);
+  };
+
+  const closeToast = () => setToast(null);
 
   // --- Fetch Data ---
   useEffect(() => {
@@ -57,10 +66,9 @@ const Profile = () => {
     } catch (error) {
       console.error("Failed to fetch profile", error);
       if (error.response && error.response.status === 401) {
-        setStatusMsg({ type: 'error', text: 'Session expired. Please login again.' });
-        // Optional: navigate('/login');
+        showToast('error', 'Session Expired', 'Please login again.');
       } else {
-        setStatusMsg({ type: 'error', text: 'Failed to load profile data.' });
+        showToast('error', 'Error', 'Failed to load profile data.');
       }
     } finally {
       setLoading(false);
@@ -92,14 +100,11 @@ const Profile = () => {
 
   const handleSaveProfile = async () => {
     setSaving(true);
-    setStatusMsg({ type: '', text: '' });
     
     try {
       const formData = new FormData();
       formData.append('first_name', user.first_name || '');
       formData.append('last_name', user.last_name || '');
-      // Email is often read-only, but if your backend allows update:
-      // formData.append('email', user.email || ''); 
       formData.append('headline', user.headline || '');
       formData.append('bio', user.bio || '');
       
@@ -116,10 +121,11 @@ const Profile = () => {
       }));
       setPreviewImage(null); 
       
-      setStatusMsg({ type: 'success', text: 'Profile updated successfully!' });
+      showToast('success', 'Profile Updated', 'Your profile information has been saved successfully.');
     } catch (error) {
       console.error(error);
-      setStatusMsg({ type: 'error', text: error.response?.data?.detail || 'Failed to update profile.' });
+      const errorMsg = error.response?.data?.detail || 'Failed to update profile.';
+      showToast('error', 'Update Failed', errorMsg);
     } finally {
       setSaving(false);
     }
@@ -129,14 +135,65 @@ const Profile = () => {
     setPassLoading(true);
     try {
       await changePassword(passwords);
-      setPasswords({ old_password: '', new_password: '' }); // Clear fields correctly
-      alert("Password updated successfully");
+      setPasswords({ old_password: '', new_password: '' });
+      showToast('success', 'Password Changed', 'Your password has been updated successfully.');
     } catch (error) {
       console.error(error);
-      alert(error.response?.data?.detail || "Failed to update password");
+      const errorMsg = error.response?.data?.detail || "Failed to update password";
+      showToast('error', 'Update Failed', errorMsg);
     } finally {
       setPassLoading(false);
     }
+  };
+
+  // --- Render Toast Component ---
+  const renderToast = () => {
+    if (!toast) return null;
+
+    let icon = '';
+    let barColorClass = '';
+    // Determine icon and color based on type
+    if (toast.type === 'success') {
+      icon = 'check';
+      barColorClass = 'bg-[#FF6D1F]'; // Brand Orange
+    } else if (toast.type === 'error') {
+      icon = 'priority_high';
+      barColorClass = 'bg-red-500'; 
+    } else {
+      icon = 'info';
+      barColorClass = 'bg-blue-500';
+    }
+
+    return (
+      <div className="fixed bottom-5 right-5 z-50 animate-[slideUp_0.3s_ease-out]">
+        <div className="pointer-events-auto relative w-[320px] overflow-hidden rounded-xl bg-[#F5E7C6] shadow-xl transition-transform hover:-translate-y-1 duration-300 group border border-[#ead7cd]">
+          <div className="flex items-start gap-3 p-4 pr-10">
+            {/* Icon Circle */}
+            <div 
+              className={`flex size-6 shrink-0 items-center justify-center rounded-full text-white ${toast.type === 'error' ? 'bg-red-500' : toast.type === 'info' ? 'bg-blue-500' : 'bg-[#FF6D1F]'}`}
+            >
+              <span className="material-symbols-outlined text-[16px] font-bold">{icon}</span>
+            </div>
+            {/* Content */}
+            <div className="flex flex-col gap-1">
+              <h3 className="font-display text-sm font-semibold text-[#222222]">{toast.title}</h3>
+              <p className="font-display text-xs text-[#222222]/80 leading-normal">{toast.message}</p>
+            </div>
+            {/* Close Button */}
+            <button 
+              onClick={closeToast}
+              className="absolute right-3 top-3 flex items-center justify-center text-[#222222]/40 transition-colors hover:text-[#FF6D1F]"
+            >
+              <span className="material-symbols-outlined text-[16px]">close</span>
+            </button>
+          </div>
+          {/* Progress Bar Decoration */}
+          <div className="h-[3px] w-full bg-[#FAF3E1]">
+            <div className={`h-full w-full ${barColorClass}`}></div>
+          </div>
+        </div>
+      </div>
+    );
   };
 
   if (loading) return <div className="min-h-screen flex items-center justify-center bg-[#FAF3E1]">Loading...</div>;
@@ -149,6 +206,13 @@ const Profile = () => {
         ::-webkit-scrollbar-track { background: #F5E7C6; }
         ::-webkit-scrollbar-thumb { background: #FF6D1F; border-radius: 4px; }
         ::-webkit-scrollbar-thumb:hover { background: #e5621c; }
+        
+        /* Keyframe for toast slide up */
+        @keyframes slideUp {
+          from { transform: translateY(100%); opacity: 0; }
+          to { transform: translateY(0); opacity: 1; }
+        }
+
         /* Fonts */
         @import url('https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap');
         @import url('https://fonts.googleapis.com/css2?family=Lexend:wght@100..900&family=Noto+Sans:wght@300;400;500;600;700&display=swap');
@@ -162,16 +226,11 @@ const Profile = () => {
         body { font-family: 'Lexend', sans-serif; }
       `}</style>
 
+      {renderToast()}
+
       <main className="min-h-screen flex flex-col text-[#222222]" style={{ backgroundColor: '#FAF3E1' }}>
         <div className="flex-1 w-full max-w-5xl mx-auto p-6 md:p-8 flex flex-col gap-8">
           
-          {/* Status Message Toast */}
-          {statusMsg.text && (
-            <div className={`p-4 rounded-lg mb-4 text-center font-bold ${statusMsg.type === 'error' ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'}`}>
-              {statusMsg.text}
-            </div>
-          )}
-
           {/* Header Card Section */}
           <div className="bg-white rounded-2xl shadow-sm border border-[#ead7cd] overflow-hidden">
             {/* Cover Photo Area */}
@@ -395,7 +454,6 @@ const Profile = () => {
                       className="w-full bg-[#F5E7C6] border-none rounded-lg px-4 py-3 text-[#222222] focus:ring-0 focus:border-2 focus:border-[#FF6D1F] transition-all"
                       placeholder="••••••••"
                       type="password"
-                      // UPDATED: Name matches state key 'old_password'
                       name="old_password"
                       value={passwords.old_password}
                       onChange={handlePasswordChange}
