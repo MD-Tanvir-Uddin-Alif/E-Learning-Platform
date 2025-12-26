@@ -8,6 +8,7 @@ class CourseModel(Base):
 
     id = Column(Integer, primary_key=True)
     title = Column(String(150), nullable=False)
+    sub_title = Column(String(150), nullable=True)
     description = Column(String(500), nullable=True)
     is_paid = Column(Boolean, default=False)
     price = Column(Float, nullable=True)

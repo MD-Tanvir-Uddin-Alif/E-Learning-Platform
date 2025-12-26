@@ -4,6 +4,7 @@ from datetime import datetime
 
 class CourseBase(BaseModel):
     title: str
+    sub_title: str | None = None 
     description: Optional[str] = None
     is_paid: bool
     price: Optional[float] = None
@@ -13,6 +14,7 @@ class CourseBase(BaseModel):
 
 class CourseCreate(BaseModel):
     title: str
+    sub_title: str | None = None 
     description: str | None = None
     is_paid: bool
     price: float | None = None
@@ -22,6 +24,7 @@ class CourseCreate(BaseModel):
 class CourseResponse(BaseModel):
     id: int
     title: str
+    sub_title: str | None = None 
     description: str | None
     is_paid: bool
     price: float | None
@@ -42,6 +45,7 @@ class VideoOut(BaseModel):
 class CourseOut(BaseModel):
     id: int
     title: str
+    sub_title: str | None = None 
     videos: list[VideoOut] = []
 
 

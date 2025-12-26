@@ -20,6 +20,9 @@ class UserModel(Base):
 
     role = Column(Enum(UserRole), nullable=False)
 
+    headline = Column(String(150), nullable=True)
+    bio = Column(String(500), nullable=True) 
+
     is_verified = Column(Boolean, default=False)
     verification_token = Column(String(255), nullable=True)
     token_expiry = Column(DateTime, nullable=True)

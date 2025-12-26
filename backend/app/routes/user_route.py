@@ -28,10 +28,14 @@ os.makedirs(UPLOAD_DIR, exist_ok=True)
 @router.get("/me")
 def get_my_profile(current_user: UserModel = Depends(get_current_user)):
     return {
+        "id": current_user.id,
         "first_name": current_user.first_name,
         "last_name": current_user.last_name,
         "email": current_user.email,
-        "profile_image": current_user.profile_image
+        "role": current_user.role.value,
+        "profile_image": current_user.profile_image,
+        "headline": current_user.headline,
+        "bio": current_user.bio
     }
 
 
@@ -43,6 +47,9 @@ async def update_profile(
     first_name: Optional[str] = Form(None),
     last_name: Optional[str] = Form(None),
     email: Optional[str] = Form(None),
+    headline: Optional[str] = Form(None),
+    bio: Optional[str] = Form(None),
+    # -----------------------
     profile_image: UploadFile = File(None),
     db: Session = Depends(get_db),
     current_user: UserModel = Depends(get_current_user)
@@ -55,9 +62,13 @@ async def update_profile(
 
     if first_name:
         current_user.first_name = first_name
-
     if last_name:
         current_user.last_name = last_name
+        
+    if headline is not None: 
+        current_user.headline = headline
+    if bio is not None:
+        current_user.bio = bio
 
     if profile_image:
         ext = profile_image.filename.split(".")[-1]
@@ -79,6 +90,8 @@ async def update_profile(
             "first_name": current_user.first_name,
             "last_name": current_user.last_name,
             "email": current_user.email,
-            "profile_image": current_user.profile_image
+            "profile_image": current_user.profile_image,
+            "headline": current_user.headline,
+            "bio": current_user.bio
         }
     }

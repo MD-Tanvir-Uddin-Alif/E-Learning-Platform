@@ -3,7 +3,7 @@
 # -------------------------------
 from fastapi import APIRouter, HTTPException, Depends, File, Form, UploadFile
 from sqlalchemy.orm import Session
-from typing import List
+from typing import List, Optional
 from uuid import uuid4
 import shutil
 import json
@@ -40,6 +40,7 @@ os.makedirs(VIDEO_UPLOAD_DIR, exist_ok=True)
 @router.post("/create-course", response_model=CourseResponse)
 def create_course(
     title: str = Form(...),
+    sub_title: Optional[str] = Form(None),
     description: str = Form(""),
     is_paid: bool = Form(...),
     price: float = Form(None),
@@ -68,6 +69,7 @@ def create_course(
 
     new_course = CourseModel(
         title=title,
+        sub_title=sub_title,
         description=description,
         is_paid=is_paid,
         price=price,
