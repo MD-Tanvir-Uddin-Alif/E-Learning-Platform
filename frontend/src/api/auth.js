@@ -15,3 +15,16 @@ export const registerUser = (formData) =>
 
 export const loginUser = (credentials) =>
   api.post('/auth/login', credentials).then((r) => r.data);
+
+
+
+
+// --- User Profile ---
+export const getMyProfile = () =>
+  api.get('/user/me').then((r) => r.data);
+
+export const updateProfile = (formData) =>
+  apiMultipart.put('/user/profile', formData).then((r) => r.data);
+
+export const changePassword = (data) =>
+  api.post('/auth/change-password', data).then((r) => r.data);
