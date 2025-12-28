@@ -41,7 +41,7 @@ async def send_verification_email(email: str, token: str):
 async def send_reset_password_email(email: str, token: str):
     """Sends a password reset email to the user."""
     # In production, change localhost to your frontend domain
-    reset_link = f"http://localhost:3000/reset-password?token={token}"
+    reset_link = f"http://localhost:5173/set-password?token={token}"
 
     html = f"""
     <h3>Password Reset Request</h3>

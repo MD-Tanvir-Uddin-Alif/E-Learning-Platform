@@ -19,6 +19,14 @@ export const loginUser = (credentials) =>
 
 
 
+export const forgotPassword = (email) =>
+  api.post('/auth/forgot-password', { email }).then((r) => r.data);
+
+export const resetPassword = (data) =>
+  api.post('/auth/reset-password', data).then((r) => r.data);
+
+
+
 // --- User Profile ---
 export const getMyProfile = () =>
   api.get('/user/me').then((r) => r.data);
