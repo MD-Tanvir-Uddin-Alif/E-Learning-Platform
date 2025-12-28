@@ -9,6 +9,7 @@ import ForgotPassword from './features/auth/ForgotPassword';
 import EmailVerification from './features/auth/EmailVerification';
 import Profile from './pages/Profile';
 import ProtectedRoute from './components/Layout/ProtectedRoute';
+import SetPassword from './features/auth/SetPassword';
 
 const router = createBrowserRouter([
   /* navbar + footer */
@@ -32,6 +33,7 @@ const router = createBrowserRouter([
 
   /* nothing */
   { path: 'forgotpassword', element: <ForgotPassword /> },
+  { path: 'set-password', element: <SetPassword />}
 ]);
 
 function App() {
