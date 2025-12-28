@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useMutation } from '@tanstack/react-query';
-import { loginUser } from '../../api/auth';
+import { loginUser } from '../../api/auth'; // Ensure path is correct
 import { Link, useNavigate } from 'react-router-dom';
 
 const Login = () => {
@@ -24,6 +24,10 @@ const Login = () => {
     mutationFn: loginUser,
     onSuccess: (data) => {
       localStorage.setItem('token', data.access_token);
+      
+      // --- CRITICAL UPDATE: Notify Navbar to update state ---
+      window.dispatchEvent(new Event('auth-change'));
+      
       showToast('success', 'Welcome Back', 'Login successful! Redirecting to profile...');
       
       // Small delay to allow the user to see the success toast before redirecting
@@ -103,7 +107,6 @@ const Login = () => {
         .floating-input:not(:placeholder-shown)+label, .floating-input:focus+label { top: 0; transform: translateY(-50%) scale(.85); color: #ff6d1f; }
         .checkbox-custom:checked { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath fill='white' d='M12.207 4.793a1 1 0 010 1.414l-5 5a1 1 0 01-1.414 0l-2-2a1 1 0 011.414-1.414L6.5 9.086l4.293-4.293a1 1 0 011.414 0z'/%3E%3C/svg%3E"); background-color: #ff6d1f; border-color: #ff6d1f; }
 
-        /* Animation for Toast (Slide Down since it's at the top on Login usually looks better, but consistent slideUp is fine too. Let's do SlideDown for top positioning) */
         @keyframes slideDown {
           from { transform: translateY(-100%); opacity: 0; }
           to { transform: translateY(0); opacity: 1; }
@@ -123,8 +126,6 @@ const Login = () => {
               <h1 className="text-[#222222] text-3xl font-bold mb-2">Welcome Back</h1>
               <p className="text-[#222222]/70 text-sm">Please enter your details to sign in.</p>
             </div>
-
-            {/* Replaced static error div with the Toast logic in mutation callbacks */}
             
             <form onSubmit={handleSubmit} className="space-y-6">
               <div className="relative">

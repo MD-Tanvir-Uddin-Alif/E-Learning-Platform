@@ -1,27 +1,50 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-
-// You might want to fetch user details to show real name/avatar
-// For now, I'll use the static design you provided
+import { getMyProfile } from '../../api/auth';
 
 const Navbar = () => {
   const navigate = useNavigate();
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [showDropdown, setShowDropdown] = useState(false);
+  const [userInfo, setUserInfo] = useState(null); 
   const dropdownRef = useRef(null);
 
-  // Check login status on mount and when storage changes
-  useEffect(() => {
-    const checkLogin = () => {
-      const token = localStorage.getItem('token');
-      setIsLoggedIn(!!token);
-    };
+  // Helper to check login status & fetch user info
+  const checkLogin = async () => {
+    const token = localStorage.getItem('token');
+    const loggedIn = !!token;
+    setIsLoggedIn(loggedIn);
 
+    if (loggedIn) {
+      try {
+        const data = await getMyProfile();
+        setUserInfo(data);
+      } catch (error) {
+        console.error("Failed to fetch navbar user info", error);
+        // Optional: specific error handling (e.g. invalid token)
+      }
+    } else {
+      setUserInfo(null);
+    }
+  };
+
+  // Initial check and event listener
+  useEffect(() => {
     checkLogin();
 
-    // Optional: Listen for storage events if you want updates across tabs
-    window.addEventListener('storage', checkLogin);
-    return () => window.removeEventListener('storage', checkLogin);
+    // Listen for custom event 'auth-change' to update immediately
+    const handleAuthChange = () => {
+      checkLogin();
+    };
+
+    window.addEventListener('auth-change', handleAuthChange);
+    // Listen for storage events (e.g. other tabs)
+    window.addEventListener('storage', handleAuthChange); 
+    
+    return () => {
+      window.removeEventListener('auth-change', handleAuthChange);
+      window.removeEventListener('storage', handleAuthChange);
+    };
   }, []);
 
   // Close dropdown when clicking outside
@@ -37,9 +60,25 @@ const Navbar = () => {
 
   const handleLogout = () => {
     localStorage.removeItem('token');
+    
+    // Dispatch event so other components (like this one) know auth state changed
+    window.dispatchEvent(new Event('auth-change'));
+    
     setIsLoggedIn(false);
+    setUserInfo(null);
     navigate('/login');
     setShowDropdown(false);
+  };
+
+  // Helper to build image URL safely
+  const getImageUrl = (path) => {
+    if (!path) return "https://via.placeholder.com/150";
+    if (path.startsWith('http')) return path;
+    
+    const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000';
+    const baseUrl = API_BASE_URL.endsWith('/') ? API_BASE_URL : `${API_BASE_URL}/`;
+    const cleanPath = path.startsWith('/') ? path.substring(1) : path;
+    return `${baseUrl}${cleanPath}`;
   };
 
   return (
@@ -72,19 +111,21 @@ const Navbar = () => {
             <div className="relative" ref={dropdownRef}>
               {/* User Profile Section */}
               <div className="flex items-center gap-3 pl-2 border-l border-black/5 dark:border-white/10">
-                {/* Role Badge */}
+                {/* Role Badge - Dynamic */}
                 <div className="hidden xl:flex h-7 px-3 items-center justify-center rounded-full bg-[#FF6D1F]/10">
-                  <span className="text-[#FF6D1F] text-xs font-bold uppercase tracking-wide">Student</span>
+                  <span className="text-[#FF6D1F] text-xs font-bold uppercase tracking-wide">
+                    {userInfo?.role || 'Student'}
+                  </span>
                 </div>
                 
-                {/* Avatar Button */}
+                {/* Avatar Button - Dynamic */}
                 <button 
                   onClick={() => setShowDropdown(!showDropdown)}
                   className="size-10 rounded-full bg-white p-0.5 overflow-hidden ring-2 ring-transparent hover:ring-[#FF6D1F] transition-all group focus:outline-none"
                 >
                   <div 
                     className="w-full h-full rounded-full bg-cover bg-center" 
-                    style={{backgroundImage: 'url("https://lh3.googleusercontent.com/aida-public/AB6AXuDzDVTKH27LnB9SdWCEpF_tKxLQFGznh0sl-52hYp08cswnRc7disRyA7qJfurJnVdC8PQQkzqr5Zqjlxg9k3yg1tnFqO-5qQLWdAy8rb6GDXGB5rxl2YxSCMKwAxEF-JJ4R1CzzwEeipYniFiZzmPej6hAxcLlJ6RanLXqRuWdsYZRYulM60jvKJsA_L0zE74ITeD9jVG3TnbkXBLvFHg6zQS0PKgJJO3wjuQryLJB6l6BDs4JQW4slkBGSrtxTaJ84pZTEaALRIo")'}}
+                    style={{backgroundImage: `url("${getImageUrl(userInfo?.profile_image)}")`}}
                   ></div>
                 </button>
               </div>
