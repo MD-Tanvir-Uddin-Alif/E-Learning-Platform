@@ -4,6 +4,7 @@ import axios from 'axios'; // Import axios for the preview version
 
 
 import { getMyProfile, updateProfile, changePassword } from '../api/auth';
+import { Link } from 'react-router-dom';
 
 const API_BASE_URL = 'http://127.0.0.1:8000';
 
@@ -322,10 +323,11 @@ const Profile = () => {
                   <span className="material-symbols-outlined text-xl">menu_book</span>
                   <p className="text-sm font-medium tracking-wide">My Courses</p>
                 </a>
-                <a className="flex items-center gap-2 border-b-[3px] border-transparent text-[#222222]/60 hover:text-[#FF6D1F] transition-colors pb-3 px-1" href="#">
-                  <span className="material-symbols-outlined text-xl">security</span>
-                  <p className="text-sm font-medium tracking-wide">Security</p>
-                </a>
+                {user?.role !== 'user' &&(<Link to='/dashboard' className="flex items-center gap-2 border-b-[3px] border-transparent text-[#222222]/60 hover:text-[#FF6D1F] transition-colors pb-3 px-1" href="#">
+                  <span className="material-symbols-outlined text-xl">dashboard</span>
+                  <p className="text-sm font-medium tracking-wide">Dashboard</p>
+                </Link>
+                )}
               </div>
             </div>
           </div>

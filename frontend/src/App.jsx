@@ -11,6 +11,7 @@ import Profile from './pages/Profile';
 import ProtectedRoute from './components/Layout/ProtectedRoute';
 import ResetPassword from './features/auth/SetPassword';
 import About from './pages/About';
+import SideBar from './hooks/SideBar';
 
 const router = createBrowserRouter([
   /* navbar + footer */
@@ -35,7 +36,8 @@ const router = createBrowserRouter([
 
   /* nothing */
   { path: 'forgotpassword', element: <ForgotPassword /> },
-  { path: 'set-password', element: < ResetPassword/>}
+  { path: 'set-password', element: < ResetPassword/>},
+  { path: 'dashboard', element: <ProtectedRoute><SideBar /></ProtectedRoute>}
 ]);
 
 function App() {

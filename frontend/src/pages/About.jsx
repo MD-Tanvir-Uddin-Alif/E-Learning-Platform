@@ -160,7 +160,7 @@ const About = () => (
             <a className="text-[#FAF3E1]/80 hover:text-white text-sm font-medium transition-colors" href="#">Terms of Service</a>
             <a className="text-[#FAF3E1]/80 hover:text-white text-sm font-medium transition-colors" href="#">Support</a>
           </div>
-          <p className="text-[#FAF3E1]/60 text-xs">© 2024 EduForge Inc. All rights reserved.</p>
+          {/* <p className="text-[#FAF3E1]/60 text-xs">© 2024 EduForge Inc. All rights reserved.</p> */}
         </div>
       </footer>
     </div>
