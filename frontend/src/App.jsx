@@ -10,6 +10,7 @@ import EmailVerification from './features/auth/EmailVerification';
 import Profile from './pages/Profile';
 import ProtectedRoute from './components/Layout/ProtectedRoute';
 import ResetPassword from './features/auth/SetPassword';
+import About from './pages/About';
 
 const router = createBrowserRouter([
   /* navbar + footer */
@@ -17,6 +18,7 @@ const router = createBrowserRouter([
     element: <MainLayout/>,
     children: [
       { path: '/', element: <Home/>},
+      { path: 'about', element: <About />}
     ],
   },
 

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, NavLink, useNavigate } from 'react-router-dom'
 import { getMyProfile } from '../../api/auth';
 
 const Navbar = () => {
@@ -93,9 +93,9 @@ const Navbar = () => {
           </Link>
           
           <div className="hidden items-center gap-8 md:flex text-[#222222]">
+            <NavLink to="/about" className={({ isActive }) =>`text-sm font-medium transition-colors ${isActive ? 'text-[#FF6D1F]' : 'text-[#222222]/80 hover:text-[#FF6D1F]'}`}>About</NavLink>
             <a href="#" className="text-sm font-medium hover:text-[#FF6D1F] transition-colors">Courses</a>
             <a href="#" className="text-sm font-medium hover:text-[#FF6D1F] transition-colors">Mentors</a>
-            <a href="#" className="text-sm font-medium hover:text-[#FF6D1F] transition-colors">Pricing</a>
             <a href="#" className="text-sm font-medium hover:text-[#FF6D1F] transition-colors">Enterprise</a>
           </div>
         </div>
