@@ -114,8 +114,23 @@ def verify_email(token: str, db: Session = Depends(get_db)):
 @router.post("/login")
 def login(user: UserLogin, db: Session = Depends(get_db)):
     db_user = db.query(UserModel).filter(UserModel.email == user.email).first()
+
     if not db_user or not verify_password(user.password, db_user.password):
         raise HTTPException(status_code=400, detail="Invalid credentials")
+    
+    if db_user.is_blocked:
+        raise HTTPException(
+            status_code=403,
+            detail="Your account has been blocked. Please contact support."
+        )
+    
+    
+    if not db_user.is_verified:
+        raise HTTPException(
+            status_code=403,
+            detail="Your account is not verified. Please check your email."
+        )
+    
 
     token = create_access_token({"user_id": db_user.id, "role": db_user.role.value})
     return {"access_token": token, "token_type": "bearer"}

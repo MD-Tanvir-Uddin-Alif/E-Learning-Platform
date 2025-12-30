@@ -24,6 +24,7 @@ class UserModel(Base):
     bio = Column(String(500), nullable=True) 
 
     is_verified = Column(Boolean, default=False)
+    is_blocked = Column(Boolean, default=False)
     verification_token = Column(String(255), nullable=True)
     token_expiry = Column(DateTime, nullable=True)
 

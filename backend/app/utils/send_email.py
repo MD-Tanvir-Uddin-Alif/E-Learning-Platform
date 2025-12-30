@@ -59,3 +59,42 @@ async def send_reset_password_email(email: str, token: str):
 
     fm = FastMail(conf)
     await fm.send_message(message)
+
+
+
+async def send_blocked_notification_email(email: str):
+    """Sends an email notification when a user is blocked."""
+    html = """
+    <h3>Account Blocked</h3>
+    <p>Your account has been blocked by the administrator due to a violation of our policies.</p>
+    <p>You can no longer log in. Please contact support if you believe this is an error.</p>
+    """
+
+    message = MessageSchema(
+        subject="Account Blocked",
+        recipients=[email],
+        body=html,
+        subtype="html"
+    )
+
+    fm = FastMail(conf)
+    await fm.send_message(message)
+
+
+async def send_unblocked_notification_email(email: str):
+    """Sends an email notification when a user is unblocked."""
+    html = """
+    <h3>Account Unblocked</h3>
+    <p>Good news! Your account has been unblocked by the administrator.</p>
+    <p>You can now log in and access your account.</p>
+    """
+
+    message = MessageSchema(
+        subject="Account Unblocked",
+        recipients=[email],
+        body=html,
+        subtype="html"
+    )
+
+    fm = FastMail(conf)
+    await fm.send_message(message)

@@ -10,6 +10,7 @@ from sqlalchemy.orm import Session
 # -------------------------------
 # Import From Files
 # -------------------------------
+from utils.send_email import send_blocked_notification_email, send_unblocked_notification_email
 from schemas.category_schema import CategoryCreate, CategoryResponse
 from models.category_model import CategoryModel
 from utils.permission import admin_required
@@ -105,3 +106,69 @@ def delete_category(
     db.commit()
 
     return {"message": "Category deleted successfully"}
+
+
+
+
+@router.put("/users/{user_id}/block")
+async def block_user(
+    user_id: int,
+    db: Session = Depends(get_db),
+    admin_user: UserModel = Depends(admin_required)
+):
+    """
+    Block a user. 
+    1. Prevents login.
+    2. Sends notification email.
+    """
+    
+    # 1. Find the user to block
+    user_to_block = db.query(UserModel).filter(UserModel.id == user_id).first()
+    if not user_to_block:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    # 2. Prevent blocking yourself
+    if user_to_block.id == admin_user.id:
+        raise HTTPException(status_code=400, detail="You cannot block yourself")
+
+    # 3. Check if already blocked
+    if user_to_block.is_blocked:
+        return {"message": "User is already blocked"}
+
+    # 4. Block user
+    user_to_block.is_blocked = True
+    db.commit()
+    
+    # 5. Send Email
+    try:
+        await send_blocked_notification_email(user_to_block.email)
+    except Exception as e:
+        print(f"Failed to send block email: {str(e)}")
+
+    return {"message": f"User {user_to_block.first_name} has been blocked successfully."}
+
+
+@router.put("/users/{user_id}/unblock")
+async def unblock_user(
+    user_id: int,
+    db: Session = Depends(get_db),
+    admin_user: UserModel = Depends(admin_required)
+):
+    """Unblock a user"""
+    
+    user_to_unblock = db.query(UserModel).filter(UserModel.id == user_id).first()
+    if not user_to_unblock:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    if not user_to_unblock.is_blocked:
+        return {"message": "User is not blocked"}
+
+    user_to_unblock.is_blocked = False
+    db.commit()
+
+    try:
+        await send_unblocked_notification_email(user_to_unblock.email)
+    except Exception as e:
+        print(f"Failed to send unblock email: {str(e)}")
+
+    return {"message": f"User {user_to_unblock.first_name} has been unblocked."}
