@@ -19,6 +19,24 @@ export const apiMultipart = axios.create({
 });
 
 
+// Fetch all users
+export const getAllUsers = async () => {
+  const response = await api.get('/admin/users');
+  return response.data;
+};
+
+// Block a user
+export const blockUser = async (userId) => {
+  const response = await api.put(`/admin/users/${userId}/block`);
+  return response.data;
+};
+
+// Unblock a user
+export const unblockUser = async (userId) => {
+  const response = await api.put(`/admin/users/${userId}/unblock`);
+  return response.data;
+};
+
 // Interceptor Logic
 const authInterceptor = (config) => {
   const token = localStorage.getItem('token');
