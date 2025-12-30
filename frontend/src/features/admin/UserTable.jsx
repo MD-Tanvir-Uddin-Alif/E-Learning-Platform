@@ -295,7 +295,7 @@ export default function UserTable() {
                 <span className="text-xs font-bold text-green-600 bg-green-100 px-2 py-1 rounded-full">{s.change}</span>
               </div>
               <p className="text-[#222222]/70 text-sm font-medium">{s.label}</p>
-              <p className="text-3xl font-black text-primary mt-1">{s.value}</p>
+              <p className="text-3xl font-black text-[#FF6D1F] mt-1">{s.value}</p>
             </div>
           ))}
         </div>
