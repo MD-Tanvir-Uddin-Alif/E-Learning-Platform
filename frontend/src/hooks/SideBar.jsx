@@ -29,8 +29,8 @@ const SideBar = () => {
       { icon: 'menu_book', label: 'Courses', to: '/instructor/courses' },
     ],
     admin: [
-      { icon: 'post_add', label: 'Add Category', to: '/categories/add' },
-      { icon: 'category', label: 'Categories', to: '/categories' },
+      { icon: 'post_add', label: 'Add Category', to: '/add-category' },
+      { icon: 'category', label: 'Categories', to: '/admin-category' },
       { icon: 'group', label: 'Users', to: '/users' },
     ]
   };

@@ -14,6 +14,8 @@ import ResetPassword from './features/auth/SetPassword';
 import About from './pages/About';
 // SideBar import removed here because it's now handled inside DashboardLayout
 import UserTable from './features/admin/UserTable';
+import AddCategory from './features/admin/AddCategory';
+import CategoryAdmin from './features/admin/CategoryAdmin';
 
 const router = createBrowserRouter([
   /* navbar + footer */
@@ -47,7 +49,9 @@ const router = createBrowserRouter([
       // When at /dashboard, show a welcome message or dashboard widgets
       { path: 'dashboard', element: <div className="p-10 text-2xl font-bold">Dashboard Home</div> }, 
       // When at /users, UserTable renders beside the sidebar
-      { path: 'users', element: <UserTable /> }
+      { path: 'users', element: <UserTable /> },
+      { path: 'add-category', element: <AddCategory />},
+      { path: 'admin-category', element: <CategoryAdmin />}
     ]
   },
 
