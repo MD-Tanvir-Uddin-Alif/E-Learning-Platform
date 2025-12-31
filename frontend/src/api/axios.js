@@ -18,6 +18,13 @@ export const apiMultipart = axios.create({
   },
 });
 
+// --- Category API ---
+export const createCategory = async (categoryData) => {
+  const response = await api.post('/admin/create-category', categoryData);
+  return response.data;
+};
+
+
 
 // Fetch all users
 export const getAllUsers = async () => {
