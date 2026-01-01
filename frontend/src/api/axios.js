@@ -24,6 +24,21 @@ export const createCategory = async (categoryData) => {
   return response.data;
 };
 
+// Get All
+export const getAllCategories = () => 
+  api.get('/public/all-categories').then((r) => r.data);
+
+
+// Update
+export const updateCategory = (id, data) => 
+  api.put(`/admin/update-category/${id}`, data).then((r) => r.data);
+
+// Delete
+export const deleteCategory = (id) => 
+  api.delete(`/admin/delete-category/${id}`).then((r) => r.data);
+
+
+
 
 
 // Fetch all users

@@ -1,22 +1,42 @@
-// src/components/CategoryAdmin.jsx
 import React, { useState } from 'react';
-
-/* ---- dummy data ---- */
-const dummyCategories = [
-  { id: 1, name: 'Web Development', desc: 'HTML, CSS, and JS fundamentals including React and Vue frameworks.', icon: 'code' },
-  { id: 2, name: 'Data Science', desc: 'Python, R, and statistical analysis modules for big data.', icon: 'bar_chart' },
-  { id: 3, name: 'UX Design', desc: 'Wireframing, prototyping, and user research methodologies.', icon: 'design_services' },
-  { id: 4, name: 'Digital Marketing', desc: 'SEO, SEM, and social media marketing strategies.', icon: 'campaign' },
-];
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useNavigate } from 'react-router-dom';
+import { getAllCategories, deleteCategory } from '../../api/axios';
 
 export default function CategoryAdmin() {
-  const [categories, setCategories] = useState(dummyCategories);
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const [showDelete, setShowDelete] = useState(null);
 
-  const handleDelete = (id) => {
-    setCategories(c => c.filter(cat => cat.id !== id));
-    setShowDelete(null);
+  // 1. Fetch Categories (Real Data)
+  const { data: categories = [], isLoading, isError } = useQuery({
+    queryKey: ['categories'],
+    queryFn: getAllCategories,
+  });
+
+  // 2. Delete Mutation
+  const deleteMutation = useMutation({
+    mutationFn: deleteCategory,
+    onSuccess: () => {
+      queryClient.invalidateQueries(['categories']);
+      setShowDelete(null);
+    },
+    onError: (err) => {
+      alert(err.response?.data?.detail || 'Failed to delete category');
+    }
+  });
+
+  // 3. Handle Edit Navigation
+  const handleEdit = (category) => {
+    navigate('/add-category', { state: { categoryToEdit: category } });
   };
+
+  const handleDelete = (id) => {
+    deleteMutation.mutate(id);
+  };
+
+  if (isLoading) return <div className="p-10 text-center text-[#222222]/60 font-['Lexend']">Loading categories...</div>;
+  if (isError) return <div className="p-10 text-center text-red-500 font-['Lexend']">Error loading categories.</div>;
 
   return (
     <>
@@ -25,119 +45,97 @@ export default function CategoryAdmin() {
       <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
       <link href="https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600;700&family=Material+Symbols+Outlined:opsz,wght,FILL@20..48,100..700,0..1&display=swap" rel="stylesheet" />
 
-      <div className="min-h-screen bg-[#FAF3E1] text-[#222222] font-['Lexend']">
-        {/* sticky header */}
-        <header className="sticky top-0 z-50 w-full h-20 bg-[#F5E7C6] shadow-sm flex items-center justify-between px-6 transition-colors duration-300">
-          <div className="flex items-center gap-3">
-            <h1 className="text-[32px] font-bold tracking-tight text-[#222222]">Categories</h1>
+      <div className="min-h-screen bg-[#FAF3E1]/30 font-['Lexend'] text-[#222222] p-8">
+        
+        {/* Header */}
+        <div className="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
+          <div>
+            <h1 className="text-3xl font-bold tracking-tight text-[#222222]">Category Management</h1>
+            <p className="text-[#222222]/60 mt-1">View, update, and manage course categories</p>
           </div>
-          <button className="flex items-center gap-2 bg-[#FF6D1F] text-[#FAF3E1] px-5 py-2.5 rounded-[12px] font-bold shadow-sm transition-all duration-200 hover:scale-105 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-[#FF6D1F] focus:ring-offset-2">
-            <span className="material-symbols-outlined text-[20px]">add</span>
-            <span>Add Category</span>
+          <button 
+            onClick={() => navigate('/add-category')}
+            className="flex items-center gap-2 px-5 py-3 bg-[#FF6D1F] text-white font-bold rounded-xl shadow-lg shadow-orange-500/20 hover:bg-[#e0560e] transition-all"
+          >
+            <span className="material-symbols-outlined">add</span>
+            Add Category
           </button>
-        </header>
+        </div>
 
-        {/* main content */}
-        <main className="flex-grow w-full max-w-5xl mx-auto px-4 py-8">
-          {/* stats */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-            {[
-              { label: 'Total Categories', value: categories.length, icon: 'category', bg: 'bg-white' },
-              { label: 'Active Courses', value: 148, icon: 'visibility', bg: 'bg-white' },
-              { label: 'Last Updated', value: '2h ago', icon: 'update', bg: 'bg-white' },
-            ].map((s) => (
-              <div key={s.label} className={`${s.bg} p-4 rounded-[20px] shadow-sm flex items-center gap-4`}>
-                <div className="size-10 rounded-full bg-[#FAF3E1] flex items-center justify-center text-[#FF6D1F]">
-                  <span className="material-symbols-outlined">{s.icon}</span>
+        {/* Categories Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+          {categories.map((cat) => (
+            <div key={cat.id} className="group relative bg-white border border-[#F5E7C6] rounded-[24px] p-6 hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
+              <div className="flex justify-between items-start mb-4">
+                <div className="size-12 rounded-2xl bg-[#FF6D1F]/10 flex items-center justify-center text-[#FF6D1F]">
+                  <span className="material-symbols-outlined text-[28px]">{cat.icon || 'category'}</span>
                 </div>
-                <div>
-                  <p className="text-sm text-[#222222]/60">{s.label}</p>
-                  <p className="text-xl font-bold text-[#222222]">{s.value}</p>
-                </div>
-              </div>
-            ))}
-          </div>
-
-          {/* category list */}
-          <div className="grid gap-4">
-            {categories.map((cat) => (
-              <div
-                key={cat.id}
-                className="group bg-white rounded-[20px] p-5 shadow-sm hover:shadow-md transition-all duration-200 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 border border-transparent hover:border-[#F5E7C6]"
-              >
-                <div className="flex items-center gap-4 w-full md:w-auto overflow-hidden">
-                  <div className="shrink-0 size-12 rounded-[14px] bg-[#FAF3E1] flex items-center justify-center text-[#222222]">
-                    <span className="material-symbols-outlined">{cat.icon}</span>
-                  </div>
-                  <div className="flex flex-col min-w-0">
-                    <h3 className="text-lg font-semibold truncate text-[#222222]">{cat.name}</h3>
-                    <p className="text-sm text-[#222222]/70 truncate max-w-xl">{cat.desc}</p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-2 self-end md:self-auto shrink-0">
-                  <button className="flex items-center gap-1.5 bg-[#F5E7C6] text-[#222222] rounded-[10px] px-4 py-2 text-sm font-medium hover:bg-[#FF6D1F] hover:text-[#FAF3E1] transition-colors">
-                    <span className="material-symbols-outlined text-[18px]">edit</span>
-                    <span className="hidden sm:inline">Edit</span>
-                  </button>
-                  <button
-                    onClick={() => setShowDelete(cat)}
-                    className="flex items-center gap-1.5 bg-[#FAF3E1] text-[#FF6D1F] border border-[#FF6D1F] rounded-[10px] px-4 py-2 text-sm font-medium hover:bg-[#FF6D1F] hover:text-[#FAF3E1] transition-colors"
+                {/* Action Buttons */}
+                <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                  <button 
+                    onClick={() => handleEdit(cat)}
+                    className="p-2 rounded-lg bg-[#FAF3E1] text-[#222222] hover:bg-[#FF6D1F] hover:text-white transition-all duration-200"
+                    title="Edit"
                   >
-                    <span className="material-symbols-outlined text-[18px]">delete</span>
-                    <span className="hidden sm:inline">Delete</span>
+                    <span className="material-symbols-outlined text-[20px]">edit</span>
+                  </button>
+                  <button 
+                    onClick={() => setShowDelete(cat)}
+                    className="p-2 rounded-lg bg-red-50 text-red-500 hover:bg-red-500 hover:text-white transition-all duration-200"
+                    title="Delete"
+                  >
+                    <span className="material-symbols-outlined text-[20px]">delete</span>
                   </button>
                 </div>
               </div>
-            ))}
-
-            {/* divider */}
-            <div className="my-12 flex items-center gap-4 opacity-50">
-              <div className="h-px bg-current grow" />
-              <span className="text-sm font-medium uppercase tracking-widest text-[#222222]">Design States Preview</span>
-              <div className="h-px bg-current grow" />
+              
+              <h3 className="text-xl font-bold text-[#222222] mb-2">{cat.name}</h3>
+              <p className="text-[#222222]/60 text-sm leading-relaxed line-clamp-3">
+                {cat.description || "No description provided."}
+              </p>
             </div>
+          ))}
 
-            {/* empty state */}
-            <div className="flex flex-col items-center justify-center py-12">
-              <div className="mb-4 text-[#FF6D1F] bg-[#FAF3E1] p-4 rounded-full">
-                <span className="material-symbols-outlined text-[48px]">folder_off</span>
-              </div>
-              <p className="text-center text-lg text-[#222222]/50 mb-4 font-medium">No categories yet</p>
-              <button className="text-[#FF6D1F] font-bold text-sm hover:underline hover:text-[#d6520f] transition-colors">
-                Create one
-              </button>
+          {categories.length === 0 && (
+            <div className="col-span-full py-12 text-center bg-white rounded-[24px] border border-dashed border-[#F5E7C6]">
+              <p className="text-[#222222]/40 font-medium">No categories found. Create one to get started!</p>
             </div>
+          )}
+        </div>
 
-            {/* delete modal (inline demo) */}
-            {showDelete && (
-              <div className="flex justify-center py-8">
-                <div className="w-full max-w-md bg-[#FAF3E1] border border-[#F5E7C6] rounded-[24px] p-6 shadow-lg">
-                  <div className="flex items-center gap-3 mb-4 text-[#FF6D1F]">
-                    <span className="material-symbols-outlined">warning</span>
-                    <h3 className="text-lg font-bold text-[#222222]">Delete Category?</h3>
-                  </div>
-                  <p className="text-[#222222]/70 mb-8 leading-relaxed">
-                    Are you sure you want to delete <span className="font-semibold text-[#222222]">"{showDelete.name}"</span>? This action cannot be undone and will affect associated courses.
-                  </p>
-                  <div className="flex justify-end gap-3">
-                    <button
-                      onClick={() => setShowDelete(null)}
-                      className="px-5 py-2.5 rounded-[12px] bg-[#F5E7C6] text-[#222222] font-bold text-sm hover:bg-opacity-80 transition-colors"
-                    >
-                      Cancel
-                    </button>
-                    <button
-                      onClick={() => handleDelete(showDelete.id)}
-                      className="px-5 py-2.5 rounded-[12px] bg-[#FF6D1F] text-[#FAF3E1] font-bold text-sm hover:bg-[#e0560e] transition-colors shadow-sm"
-                    >
-                      Delete
-                    </button>
-                  </div>
-                </div>
+        {/* Delete Modal */}
+        {showDelete && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#222222]/40 backdrop-blur-sm animate-[fadeIn_0.2s_ease-out]">
+            <div className="w-full max-w-md bg-[#FAF3E1] border border-[#F5E7C6] rounded-[24px] p-6 shadow-lg">
+              <div className="flex items-center gap-3 mb-4 text-[#FF6D1F]">
+                <span className="material-symbols-outlined">warning</span>
+                <h3 className="text-lg font-bold text-[#222222]">Delete Category?</h3>
               </div>
-            )}
+              <p className="text-[#222222]/70 mb-8 leading-relaxed">
+                Are you sure you want to delete <span className="font-semibold text-[#222222]">"{showDelete.name}"</span>? This action cannot be undone and will affect associated courses.
+              </p>
+              <div className="flex justify-end gap-3">
+                <button
+                  onClick={() => setShowDelete(null)}
+                  className="px-5 py-2.5 rounded-[12px] bg-[#F5E7C6] text-[#222222] font-bold text-sm hover:bg-opacity-80 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={() => handleDelete(showDelete.id)}
+                  className="px-5 py-2.5 rounded-[12px] bg-[#FF6D1F] text-[#FAF3E1] font-bold text-sm hover:bg-[#e0560e] transition-colors shadow-sm"
+                  disabled={deleteMutation.isPending}
+                >
+                  {deleteMutation.isPending ? 'Deleting...' : 'Delete'}
+                </button>
+              </div>
+            </div>
           </div>
-        </main>
+        )}
+
+        <style>{`
+          @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        `}</style>
       </div>
     </>
   );

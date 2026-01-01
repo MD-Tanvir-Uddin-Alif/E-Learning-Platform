@@ -1,16 +1,30 @@
-// src/components/admin/AddCategory.jsx
-import React, { useState } from 'react';
-import { createCategory } from '../../api/axios'; // Ensure this path is correct
+import React, { useState, useEffect } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
+import { createCategory, updateCategory } from '../../api/axios';
 
 export default function AddCategory() {
+  const location = useLocation();
+  const navigate = useNavigate();
+  
+  // Check if we are in "Edit Mode" based on passed state
+  const categoryToEdit = location.state?.categoryToEdit;
+  const isEditMode = !!categoryToEdit;
+
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
+  // --- Initialize Form Data if Editing ---
+  useEffect(() => {
+    if (isEditMode) {
+      setName(categoryToEdit.name);
+      setDescription(categoryToEdit.description);
+    }
+  }, [isEditMode, categoryToEdit]);
+
   // --- Toast State ---
   const [toast, setToast] = useState(null); 
 
-  // --- Helpers ---
   const showToast = (type, title, message) => {
     setToast({ type, title, message });
     setTimeout(() => setToast(null), 4000);
@@ -28,43 +42,42 @@ export default function AddCategory() {
     setIsLoading(true);
 
     try {
-      await createCategory({ name, description });
-      
-      showToast('success', 'Category Created', 'New category has been added successfully!');
-      setName('');
-      setDescription('');
+      if (isEditMode) {
+        // UPDATE Logic
+        await updateCategory(categoryToEdit.id, { name, description });
+        showToast('success', 'Category Updated', 'Changes saved successfully!');
+        // Optional: Redirect back after short delay
+        setTimeout(() => navigate('/admin-category'), 1500); 
+      } else {
+        // CREATE Logic
+        await createCategory({ name, description });
+        showToast('success', 'Category Created', 'New category added successfully!');
+        setName('');
+        setDescription('');
+      }
     } catch (err) {
       console.error(err);
-      const msg = err.response?.data?.detail || 'Failed to create category';
-      showToast('error', 'Creation Failed', msg);
+      const msg = err.response?.data?.detail || `Failed to ${isEditMode ? 'update' : 'create'} category`;
+      showToast('error', 'Operation Failed', msg);
     } finally {
       setIsLoading(false);
     }
   };
 
-  // --- Render Toast Component ---
+  // --- Render Toast ---
   const renderToast = () => {
     if (!toast) return null;
-
-    let icon = '';
-    let barColorClass = '';
-    if (toast.type === 'success') {
-      icon = 'check';
-      barColorClass = 'bg-[#FF6D1F]'; 
-    } else if (toast.type === 'error') {
-      icon = 'priority_high';
-      barColorClass = 'bg-red-500'; 
-    } else {
-      icon = 'info';
-      barColorClass = 'bg-blue-500';
-    }
-
+    const isError = toast.type === 'error';
+    const isSuccess = toast.type === 'success';
+    
     return (
       <div className="fixed top-5 right-5 z-[70] animate-[slideDown_0.3s_ease-out]">
         <div className="pointer-events-auto relative w-[320px] overflow-hidden rounded-xl bg-[#F5E7C6] shadow-xl border border-[#ead7cd]">
           <div className="flex items-start gap-3 p-4 pr-10">
-            <div className={`flex size-6 shrink-0 items-center justify-center rounded-full text-white ${toast.type === 'error' ? 'bg-red-500' : toast.type === 'info' ? 'bg-blue-500' : 'bg-[#FF6D1F]'}`}>
-              <span className="material-symbols-outlined text-[16px] font-bold">{icon}</span>
+            <div className={`flex size-6 shrink-0 items-center justify-center rounded-full text-white ${isError ? 'bg-red-500' : isSuccess ? 'bg-[#FF6D1F]' : 'bg-blue-500'}`}>
+              <span className="material-symbols-outlined text-[16px] font-bold">
+                {isError ? 'priority_high' : isSuccess ? 'check' : 'info'}
+              </span>
             </div>
             <div className="flex flex-col gap-1">
               <h3 className="font-display text-sm font-semibold text-[#222222]">{toast.title}</h3>
@@ -75,7 +88,7 @@ export default function AddCategory() {
             </button>
           </div>
           <div className="h-[3px] w-full bg-[#FAF3E1]">
-            <div className={`h-full w-full ${barColorClass}`}></div>
+            <div className={`h-full w-full ${isError ? 'bg-red-500' : isSuccess ? 'bg-[#FF6D1F]' : 'bg-blue-500'}`}></div>
           </div>
         </div>
       </div>
@@ -84,10 +97,9 @@ export default function AddCategory() {
 
   return (
     <>
-      {/* fonts & icons */}
       <link rel="preconnect" href="https://fonts.googleapis.com" />
       <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
-      <link href="https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600;700&family=Noto+Sans:wght@400;500;700&family=Material+Symbols+Outlined:opsz,wght,FILL@20..48,100..700,0..1&display=swap" rel="stylesheet" />
+      <link href="https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600;700&family=Material+Symbols+Outlined:opsz,wght,FILL@20..48,100..700,0..1&display=swap" rel="stylesheet" />
 
       <style>{`
         @keyframes slideDown {
@@ -100,22 +112,25 @@ export default function AddCategory() {
 
       <div className="min-h-screen bg-white font-['Lexend'] text-[#222222] flex flex-col antialiased selection:bg-[#FF6D1F]/30">
         <div className="flex h-full grow flex-col items-center justify-center p-4">
-          {/* card */}
-          <main className="w-[92%] md:w-[480px] bg-[#FAF3E1] rounded-[24px] shadow-lg p-8 md:p-10 transition-all duration-300 border border-[#F5E7C6]">
-            {/* header */}
-            <div className="flex flex-col items-center mb-8">
+          <main className="w-[92%] md:w-[480px] bg-[#FAF3E1] rounded-[24px] shadow-lg p-8 md:p-10 transition-all duration-300 border border-[#F5E7C6] relative overflow-hidden">
+            
+            {/* Header */}
+            <div className="flex flex-col items-center mb-8 relative z-10">
               <div className="size-12 rounded-xl bg-[#FF6D1F]/10 flex items-center justify-center text-[#FF6D1F] mb-4">
-                 <span className="material-symbols-outlined text-[28px]">post_add</span>
+                 <span className="material-symbols-outlined text-[28px]">
+                    {isEditMode ? 'edit_note' : 'post_add'}
+                 </span>
               </div>
               <h2 className="text-[28px] font-bold leading-tight text-center tracking-tight text-[#222222]">
-                Create New Category
+                {isEditMode ? 'Update Category' : 'Create New Category'}
               </h2>
-              <p className="text-[#222222]/60 text-sm mt-1 text-center">Add a new topic for courses</p>
+              <p className="text-[#222222]/60 text-sm mt-1 text-center">
+                {isEditMode ? 'Modify category details below' : 'Add a new topic for courses'}
+              </p>
             </div>
 
-            {/* form */}
-            <form onSubmit={handleSubmit} className="flex flex-col gap-6">
-              {/* category name */}
+            {/* Form */}
+            <form onSubmit={handleSubmit} className="flex flex-col gap-6 relative z-10">
               <div className="flex flex-col gap-2">
                 <label htmlFor="category-name" className="text-sm font-bold text-[#222222] ml-1">
                   Category Name
@@ -123,7 +138,6 @@ export default function AddCategory() {
                 <div className="relative">
                   <input
                     id="category-name"
-                    name="category-name"
                     type="text"
                     value={name}
                     onChange={(e) => setName(e.target.value)}
@@ -134,14 +148,12 @@ export default function AddCategory() {
                 </div>
               </div>
 
-              {/* description */}
               <div className="flex flex-col gap-2">
                 <label htmlFor="description" className="text-sm font-bold text-[#222222] ml-1">
                   Description
                 </label>
                 <textarea
                   id="description"
-                  name="description"
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
                   placeholder="Briefly describe this category…"
@@ -151,7 +163,6 @@ export default function AddCategory() {
                 />
               </div>
 
-              {/* actions */}
               <div className="flex flex-col gap-3 mt-4">
                 <button
                   type="submit"
@@ -161,28 +172,39 @@ export default function AddCategory() {
                   {isLoading ? (
                     <>
                       <span className="material-symbols-outlined animate-spin text-[20px]">progress_activity</span>
-                      <span>Creating...</span>
+                      <span>{isEditMode ? 'Saving...' : 'Creating...'}</span>
                     </>
                   ) : (
-                    <span>Create Category</span>
+                    <span>{isEditMode ? 'Save Changes' : 'Create Category'}</span>
                   )}
                 </button>
-                <button
-                  type="button"
-                  onClick={() => { setName(''); setDescription(''); }}
-                  className={`w-full h-12 text-[#222222]/60 hover:text-[#222222] hover:bg-[#F5E7C6]/50 text-sm font-bold rounded-xl transition-colors ${isLoading ? 'pointer-events-none opacity-50' : ''}`}
-                >
-                  Clear Form
-                </button>
+                
+                {isEditMode ? (
+                  <button
+                    type="button"
+                    onClick={() => navigate('/admin-category')}
+                    className="w-full h-12 text-[#222222]/60 hover:text-[#222222] hover:bg-[#F5E7C6]/50 text-sm font-bold rounded-xl transition-colors"
+                  >
+                    Cancel Update
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => { setName(''); setDescription(''); }}
+                    className={`w-full h-12 text-[#222222]/60 hover:text-[#222222] hover:bg-[#F5E7C6]/50 text-sm font-bold rounded-xl transition-colors ${isLoading ? 'pointer-events-none opacity-50' : ''}`}
+                  >
+                    Clear Form
+                  </button>
+                )}
               </div>
             </form>
-          </main>
 
-          {/* decorative blobs */}
-          <div className="fixed top-0 left-0 w-full h-full pointer-events-none -z-10 overflow-hidden">
-             <div className="absolute top-[-10%] right-[-5%] w-[40%] h-[40%] bg-[#FF6D1F]/5 blur-[100px] rounded-full" />
-             <div className="absolute bottom-[-10%] left-[-5%] w-[40%] h-[40%] bg-[#F5E7C6]/40 blur-[100px] rounded-full" />
-          </div>
+            {/* Decorative blobs */}
+            <div className="absolute top-0 left-0 w-full h-full pointer-events-none z-0">
+               <div className="absolute top-[-10%] right-[-5%] w-[40%] h-[40%] bg-[#FF6D1F]/5 blur-[60px] rounded-full" />
+               <div className="absolute bottom-[-10%] left-[-5%] w-[40%] h-[40%] bg-[#F5E7C6] blur-[60px] rounded-full" />
+            </div>
+          </main>
         </div>
       </div>
     </>
