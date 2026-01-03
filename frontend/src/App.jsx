@@ -19,6 +19,7 @@ import CategoryAdmin from './features/admin/CategoryAdmin';
 import CreateCourse from './features/instructor/CreateCourse';
 import AddVideos from './features/instructor/AddVideos';
 import MyCoursesGallery from './features/instructor/MyCoursesGallery';
+import InstructorCourseOverview from './features/instructor/InstructorCourseOverview';
 
 const router = createBrowserRouter([
   /* navbar + footer */
@@ -57,7 +58,8 @@ const router = createBrowserRouter([
       //instractor path
       { path: 'course/add', element: <CreateCourse />},
       { path: 'video/add', element: <AddVideos />},
-      { path: 'instructor/courses', element: <MyCoursesGallery />}
+      { path: 'instructor/courses', element: <MyCoursesGallery />},
+      { path: 'instructor/course/:courseId', element: <InstructorCourseOverview />},
     ]
   },
 

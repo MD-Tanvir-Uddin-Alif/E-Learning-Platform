@@ -48,12 +48,29 @@ export const createCourse = (formData) =>
 export const addVideosToCourse = (courseId, formData) => 
   apiMultipart.post(`/instructor/courses/${courseId}/add-video`, formData).then((r) => r.data);
 
+// Fetch details of a specific course
+export const getCourseDetails = (courseId) =>
+  api.get(`/instructor/courses/${courseId}`).then((r) => r.data);
+
+// Fetch all courses created by the logged-in instructor
+export const getMyCourses = () => 
+  api.get('/instructor/my-courses').then((r) => r.data);
+
+
+
+
+
+
+
+//---------Admin manage user-----------------
+
 
 // Fetch all users
 export const getAllUsers = async () => {
   const response = await api.get('/admin/users');
   return response.data;
 };
+
 
 // Block a user
 export const blockUser = async (userId) => {
