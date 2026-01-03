@@ -1,9 +1,8 @@
 import React from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { getCourseDetails, getAllCategories } from '../../api/axios'; // Ensure this import exists
+import { getCourseDetails, getAllCategories } from '../../api/axios'; 
 
-// Base URL for images
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000';
 
 const getMediaUrl = (path) => {
@@ -24,13 +23,12 @@ export default function InstructorCourseOverview() {
     enabled: !!courseId,
   });
 
-  // 2. Fetch Categories (to resolve ID to Name)
+  // 2. Fetch Categories
   const { data: categories = [] } = useQuery({
     queryKey: ['categories-select'],
     queryFn: getAllCategories,
   });
 
-  // Helper to get category name
   const getCategoryName = (id) => {
     const cat = categories.find((c) => c.id === id);
     return cat ? cat.name : `Category #${id}`;
@@ -54,7 +52,6 @@ export default function InstructorCourseOverview() {
 
       <div className="min-h-screen bg-[#FAF3E1]/30 font-['Lexend'] text-[#222222]">
         
-        {/* sticky navbar placeholder / back nav */}
         <header className="sticky top-0 z-20 bg-white/80 px-6 py-4 backdrop-blur-md border-b border-[#F5E7C6]">
           <div className="mx-auto flex max-w-5xl items-center gap-4">
             <button 
@@ -65,9 +62,10 @@ export default function InstructorCourseOverview() {
             </button>
             <h1 className="text-lg font-bold text-[#222222] truncate">{course.title}</h1>
             <div className="ml-auto flex gap-3">
+              {/* EDIT DETAILS BUTTON */}
               <button 
                 className="hidden sm:flex h-10 items-center gap-2 rounded-lg border border-[#F5E7C6] px-4 text-sm font-bold text-[#222222] hover:bg-[#FAF3E1] transition-colors"
-                onClick={() => alert('Edit functionality to be implemented')}
+                onClick={() => navigate('/course/add', { state: { courseToEdit: course } })}
               >
                 <span className="material-symbols-outlined text-[18px]">edit</span>
                 Edit Details
@@ -83,12 +81,10 @@ export default function InstructorCourseOverview() {
 
         <main className="px-6 py-8 pb-20">
           
-          {/* hero section */}
           <section className="mx-auto max-w-5xl">
             <div className="overflow-hidden rounded-[32px] bg-white shadow-xl shadow-[#F5E7C6]/50 border border-[#F5E7C6]">
               <div className="grid grid-cols-1 md:grid-cols-12">
                 
-                {/* Image */}
                 <div className="relative bg-[#222222] md:col-span-5 h-64 md:h-auto">
                    {course.image_url ? (
                      <img
@@ -104,13 +100,11 @@ export default function InstructorCourseOverview() {
                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent md:bg-gradient-to-r" />
                 </div>
 
-                {/* Info */}
                 <div className="flex flex-col p-8 md:col-span-7 md:p-10">
                   <div className="mb-4 flex items-center gap-3">
                     <span className={`rounded-full px-3 py-1 text-xs font-bold uppercase tracking-wide ${course.is_paid ? 'bg-[#FAF3E1] text-[#FF6D1F]' : 'bg-green-100 text-green-700'}`}>
                       {course.is_paid ? 'Paid' : 'Free'}
                     </span>
-                    {/* Category Name Display */}
                     <span className="rounded-full bg-[#FAF3E1] px-3 py-1 text-xs font-bold text-[#222222]/60 uppercase tracking-wide">
                       {getCategoryName(course.category_id)}
                     </span>
@@ -135,7 +129,7 @@ export default function InstructorCourseOverview() {
                     </div>
                     <div className="flex flex-col">
                       <span className="text-xs font-bold text-[#222222]/40 uppercase">Students</span>
-                      <span className="text-xl font-bold text-[#222222]">0</span> {/* Placeholder */}
+                      <span className="text-xl font-bold text-[#222222]">0</span>
                     </div>
                      <div className="flex flex-col">
                       <span className="text-xs font-bold text-[#222222]/40 uppercase">Rating</span>
@@ -146,7 +140,6 @@ export default function InstructorCourseOverview() {
                     </div>
                   </div>
                   
-                  {/* description block */}
                    <div className="mt-8">
                      <h3 className="text-sm font-bold uppercase text-[#222222]/40 mb-2">Description</h3>
                      <p className="text-[#222222]/70 leading-relaxed whitespace-pre-wrap">
@@ -159,7 +152,6 @@ export default function InstructorCourseOverview() {
             </div>
           </section>
 
-          {/* videos section */}
           <section className="mx-auto mt-12 max-w-5xl scroll-mt-24" id="videos-section">
             <div className="mb-6 flex items-center justify-between px-2">
               <div className="flex items-center gap-3">
@@ -168,16 +160,22 @@ export default function InstructorCourseOverview() {
                   {course.videos ? course.videos.length : 0}
                 </span>
               </div>
+              {/* ADD/MANAGE VIDEOS BUTTON */}
               <button
-                onClick={() => navigate('/video/add', { state: { courseId: course.id, courseTitle: course.title } })}
+                onClick={() => navigate('/video/add', { 
+                    state: { 
+                        courseId: course.id, 
+                        courseTitle: course.title,
+                        existingVideos: course.videos // Passing existing videos triggers "Manage Mode"
+                    } 
+                })}
                 className="group flex items-center gap-1 text-sm font-bold text-[#FF6D1F] hover:underline"
               >
-                <span className="material-symbols-outlined transition-transform group-hover:rotate-90">add</span>
-                Add New Video
+                <span className="material-symbols-outlined transition-transform group-hover:rotate-90">settings</span>
+                Manage Videos
               </button>
             </div>
 
-            {/* video grid */}
             <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
               {course.videos && course.videos.length > 0 ? (
                 course.videos.map((v) => (
@@ -199,14 +197,10 @@ export default function InstructorCourseOverview() {
 function VideoCard({ v }) {
   return (
     <div className="group relative overflow-hidden rounded-2xl bg-white shadow-sm border border-[#F5E7C6] transition-all hover:-translate-y-1 hover:shadow-xl">
-      {/* Thumbnail Area */}
       <div className="relative aspect-video bg-[#222222]">
-        {/* Placeholder for video thumbnail since API might not return one directly yet, or just show Play icon */}
         <div className="absolute inset-0 flex items-center justify-center text-white/20">
            <span className="material-symbols-outlined text-[48px]">play_circle</span>
         </div>
-        
-        {/* Overlay */}
         <div className="absolute inset-0 bg-black/20 group-hover:bg-black/40 transition-colors" />
         <span className="absolute bottom-3 right-3 rounded bg-black/70 px-1.5 py-0.5 text-xs font-bold text-white backdrop-blur-md">
            Order: {v.order}

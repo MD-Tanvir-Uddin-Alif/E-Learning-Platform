@@ -1,14 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useMutation } from '@tanstack/react-query';
-import { addVideosToCourse } from '../../api/axios'; // API function
+import { addVideosToCourse, manageCourseVideos } from '../../api/axios';
 
 export default function AddVideos() {
   const location = useLocation();
   const navigate = useNavigate();
-  const { courseId, courseTitle } = location.state || {};
+  const { courseId, courseTitle, existingVideos } = location.state || {};
+  const isManageMode = !!existingVideos; // If we have existing videos, we are in "Manage" mode
 
-  // Redirect if no courseId (direct access protection)
+  // Redirect if no courseId
   useEffect(() => {
     if (!courseId) {
       alert("No course selected. Please create a course first.");
@@ -16,8 +17,13 @@ export default function AddVideos() {
     }
   }, [courseId, navigate]);
 
-  // Video State
-  const [videoQueue, setVideoQueue] = useState([]);
+  // State for NEW videos (Files to upload)
+  const [newVideoQueue, setNewVideoQueue] = useState([]);
+  
+  // State for EXISTING videos (For renaming/reordering)
+  // We initialize this from location state
+  const [existingQueue, setExistingQueue] = useState(existingVideos || []);
+
   const [toast, setToast] = useState(null);
 
   // --- Helpers ---
@@ -27,55 +33,97 @@ export default function AddVideos() {
   };
   const closeToast = () => setToast(null);
 
+  // Handle NEW file input
   const handleFileSelect = (e) => {
     if (e.target.files) {
+      const startOrder = (existingQueue.length > 0 ? Math.max(...existingQueue.map(v=>v.order)) : 0) + newVideoQueue.length + 1;
+
       const newFiles = Array.from(e.target.files).map((file, index) => ({
-        id: Date.now() + index,
+        tempId: Date.now() + index, // Local ID for UI
         file,
         title: file.name.split('.')[0],
-        order: videoQueue.length + index + 1
+        order: startOrder + index
       }));
-      setVideoQueue(prev => [...prev, ...newFiles]);
+      setNewVideoQueue(prev => [...prev, ...newFiles]);
     }
   };
 
-  const updateTitle = (id, newTitle) => {
-    setVideoQueue(prev => prev.map(v => v.id === id ? { ...v, title: newTitle } : v));
+  // Update Title (New Videos)
+  const updateNewTitle = (tempId, newTitle) => {
+    setNewVideoQueue(prev => prev.map(v => v.tempId === tempId ? { ...v, title: newTitle } : v));
+  };
+  // Remove (New Videos)
+  const removeNewVideo = (tempId) => {
+    setNewVideoQueue(prev => prev.filter(v => v.tempId !== tempId));
   };
 
-  const removeVideo = (id) => {
-    setVideoQueue(prev => prev.filter(v => v.id !== id));
+  // Update Title (Existing Videos)
+  const updateExistingTitle = (id, newTitle) => {
+    setExistingQueue(prev => prev.map(v => v.id === id ? { ...v, title: newTitle } : v));
   };
 
-  // API Mutation
+  // Mutations
   const uploadMutation = useMutation({
-    mutationFn: (formData) => addVideosToCourse(courseId, formData),
+    // If manage mode, use manageCourseVideos. Else use legacy addVideosToCourse.
+    mutationFn: (formData) => {
+        if (isManageMode) {
+            return manageCourseVideos(courseId, formData);
+        } else {
+            return addVideosToCourse(courseId, formData);
+        }
+    },
     onSuccess: () => {
-      showToast('success', 'Upload Complete', 'All videos have been added successfully.');
-      setTimeout(() => navigate('/instructor/courses'), 2000); // Redirect to course list
+      showToast('success', 'Success', 'Videos have been updated successfully.');
+      setTimeout(() => navigate(`/instructor/course/${courseId}`), 2000);
     },
     onError: (err) => {
-      const msg = err.response?.data?.detail || 'Failed to upload videos';
-      showToast('error', 'Upload Failed', msg);
+      const msg = err.response?.data?.detail || 'Failed to process videos';
+      showToast('error', 'Error', msg);
     }
   });
 
-  const handleUpload = () => {
-    if (videoQueue.length === 0) {
-      showToast('error', 'Empty Queue', 'Please select videos to upload.');
-      return;
-    }
-
+  const handleSave = () => {
     const formData = new FormData();
-    const titles = videoQueue.map(v => v.title);
-    const orders = videoQueue.map((_, index) => index + 1);
 
-    formData.append('titles', JSON.stringify(titles));
-    formData.append('orders', JSON.stringify(orders));
+    if (isManageMode) {
+        // 1. Prepare Updates for Existing Videos
+        // API expects 'video_updates' as JSON string of list [{id, title, order}]
+        const updates = existingQueue.map(v => ({
+            id: v.id,
+            title: v.title,
+            order: v.order // Assuming we aren't changing order in UI for now
+        }));
+        formData.append('video_updates', JSON.stringify(updates));
 
-    videoQueue.forEach(v => {
-      formData.append('videos', v.file);
-    });
+        // 2. Prepare New Videos
+        // API expects 'new_files' (list of files) and 'new_files_data' (JSON list of metadata)
+        if (newVideoQueue.length > 0) {
+            const newMeta = newVideoQueue.map(v => ({
+                title: v.title,
+                order: v.order
+            }));
+            formData.append('new_files_data', JSON.stringify(newMeta));
+            
+            newVideoQueue.forEach(v => {
+                formData.append('new_files', v.file);
+            });
+        }
+    } else {
+        // LEGACY MODE (First time add)
+        if (newVideoQueue.length === 0) {
+            showToast('error', 'Empty Queue', 'Please select videos to upload.');
+            return;
+        }
+        const titles = newVideoQueue.map(v => v.title);
+        const orders = newVideoQueue.map((_, index) => index + 1);
+
+        formData.append('titles', JSON.stringify(titles));
+        formData.append('orders', JSON.stringify(orders));
+
+        newVideoQueue.forEach(v => {
+            formData.append('videos', v.file);
+        });
+    }
 
     uploadMutation.mutate(formData);
   };
@@ -124,55 +172,73 @@ export default function AddVideos() {
       <div className="min-h-screen bg-[#FAF3E1]/50 w-full flex justify-center p-4 md:p-8 font-['Lexend'] text-[#222222]">
         <main className="w-full max-w-[800px] flex flex-col gap-6">
           
-          {/* Header */}
           <header className="flex flex-col gap-2">
-            <h1 className="text-3xl font-bold tracking-tight">Upload Videos</h1>
+            <h1 className="text-3xl font-bold tracking-tight">
+                {isManageMode ? 'Manage Videos' : 'Upload Videos'}
+            </h1>
             <p className="text-[#222222]/60">
-               Adding content to <span className="font-bold text-[#FF6D1F]">"{courseTitle || 'New Course'}"</span>
+               {isManageMode ? 'Edit existing content or add new lessons for' : 'Adding content to'} <span className="font-bold text-[#FF6D1F]">"{courseTitle || 'Course'}"</span>
             </p>
           </header>
 
-          {/* Main Card */}
           <div className="bg-white rounded-[24px] shadow-xl border border-[#F5E7C6] p-6 md:p-8 relative overflow-hidden flex flex-col gap-6">
             
-            {/* List */}
             <div className="flex flex-col gap-4">
-              {videoQueue.length === 0 ? (
-                <div className="p-10 border-2 border-dashed border-[#F5E7C6] rounded-2xl flex flex-col items-center justify-center text-center gap-3 bg-[#FAF3E1]/20">
-                   <div className="size-16 bg-[#FAF3E1] rounded-full flex items-center justify-center text-[#FF6D1F]">
-                      <span className="material-symbols-outlined text-[32px]">video_library</span>
+              
+              {/* --- EXISTING VIDEOS SECTION --- */}
+              {isManageMode && existingQueue.length > 0 && (
+                 <div className="space-y-3 mb-6">
+                    <h3 className="text-sm font-bold uppercase text-[#222222]/40">Existing Videos</h3>
+                    {existingQueue.map((v) => (
+                        <div key={v.id} className="bg-gray-50 border border-gray-200 rounded-xl p-3 flex items-center gap-4">
+                            <span className="font-bold text-[#222222]/20 w-6 text-center">{v.order}</span>
+                            <div className="size-10 rounded-lg bg-gray-200 flex items-center justify-center text-gray-500 shrink-0">
+                                <span className="material-symbols-outlined text-[20px]">movie</span>
+                            </div>
+                            <input 
+                                type="text" 
+                                value={v.title}
+                                onChange={(e) => updateExistingTitle(v.id, e.target.value)}
+                                className="bg-transparent font-medium text-[#222222] focus:outline-none focus:border-b-2 focus:border-[#FF6D1F] w-full"
+                            />
+                            <div className="text-xs text-gray-400 whitespace-nowrap">Published</div>
+                        </div>
+                    ))}
+                 </div>
+              )}
+
+              {/* --- NEW VIDEOS SECTION --- */}
+              <h3 className="text-sm font-bold uppercase text-[#222222]/40">
+                  {isManageMode ? 'Add New Videos' : 'Video Queue'}
+              </h3>
+              
+              {newVideoQueue.length === 0 ? (
+                <div className="p-8 border-2 border-dashed border-[#F5E7C6] rounded-2xl flex flex-col items-center justify-center text-center gap-3 bg-[#FAF3E1]/20">
+                   <div className="size-12 bg-[#FAF3E1] rounded-full flex items-center justify-center text-[#FF6D1F]">
+                      <span className="material-symbols-outlined text-[24px]">add</span>
                    </div>
-                   <p className="font-bold text-[#222222]/40">No videos selected yet</p>
+                   <p className="font-bold text-[#222222]/40 text-sm">No new videos selected</p>
                 </div>
               ) : (
-                videoQueue.map((v, i) => (
-                  <div key={v.id} className="group relative bg-[#FAF3E1]/30 border border-[#F5E7C6] hover:border-[#FF6D1F]/30 hover:bg-white rounded-xl p-3 flex items-center gap-4 transition-all duration-300 animate-[fadeIn_0.3s_ease-out]">
-                    
-                    {/* Index */}
-                    <span className="font-bold text-[#222222]/20 w-6 text-center">{i + 1}</span>
-
-                    {/* Preview Icon */}
-                    <div className="size-12 rounded-lg bg-[#222222] flex items-center justify-center text-white flex-shrink-0 shadow-md">
-                      <span className="material-symbols-outlined">play_arrow</span>
+                newVideoQueue.map((v, i) => (
+                  <div key={v.tempId} className="bg-[#FAF3E1]/30 border border-[#F5E7C6] rounded-xl p-3 flex items-center gap-4 animate-[fadeIn_0.3s_ease-out]">
+                    <span className="font-bold text-[#222222]/20 w-6 text-center">
+                        {v.order}
+                    </span>
+                    <div className="size-10 rounded-lg bg-[#FF6D1F]/10 flex items-center justify-center text-[#FF6D1F] shrink-0">
+                      <span className="material-symbols-outlined text-[20px]">upload</span>
                     </div>
-
-                    {/* Inputs */}
                     <div className="flex-1 min-w-0 flex flex-col gap-1">
                       <input 
                         type="text" 
                         value={v.title}
-                        onChange={(e) => updateTitle(v.id, e.target.value)}
+                        onChange={(e) => updateNewTitle(v.tempId, e.target.value)}
                         placeholder="Video Title"
-                        className="bg-transparent font-bold text-[#222222] placeholder-[#222222]/30 focus:outline-none focus:text-[#FF6D1F] transition-colors w-full"
+                        className="bg-transparent font-bold text-[#222222] placeholder-[#222222]/30 focus:outline-none focus:text-[#FF6D1F] w-full"
                       />
                       <p className="text-xs text-[#222222]/50 truncate">{v.file.name}</p>
                     </div>
-
-                    {/* Delete Action */}
-                    <button 
-                      onClick={() => removeVideo(v.id)}
-                      className="size-8 rounded-lg flex items-center justify-center text-[#222222]/30 hover:bg-red-50 hover:text-red-500 transition-colors"
-                    >
+                    <button onClick={() => removeNewVideo(v.tempId)} className="text-[#222222]/30 hover:text-red-500">
                       <span className="material-symbols-outlined text-[20px]">delete</span>
                     </button>
                   </div>
@@ -180,7 +246,7 @@ export default function AddVideos() {
               )}
 
               {/* Add Button */}
-              <div className="relative">
+              <div className="relative mt-2">
                 <input 
                   type="file" 
                   multiple 
@@ -193,7 +259,7 @@ export default function AddVideos() {
                   className="group w-full border-2 border-dashed border-[#FF6D1F] hover:border-solid rounded-[12px] py-3 px-4 flex items-center justify-center gap-2 text-[#FF6D1F] hover:bg-[#FF6D1F] hover:text-white transition-all duration-300"
                 >
                   <span className="material-symbols-outlined group-hover:scale-110 transition-transform">add_circle</span>
-                  <span className="font-medium">Add more videos</span>
+                  <span className="font-medium">Select Videos to Upload</span>
                 </button>
               </div>
             </div>
@@ -201,26 +267,26 @@ export default function AddVideos() {
             {/* Footer Actions */}
             <div className="sticky bottom-0 bg-white pt-4 mt-2 border-t border-transparent flex justify-end items-center gap-4 z-10">
               <button
-                onClick={() => navigate('/instructor/courses')}
+                onClick={() => navigate(`/instructor/course/${courseId}`)}
                 className="text-[#222222] text-sm font-medium hover:underline decoration-primary decoration-2 underline-offset-4"
               >
                 Cancel
               </button>
               <button
                 type="button"
-                onClick={handleUpload}
-                disabled={videoQueue.length === 0 || uploadMutation.isPending}
+                onClick={handleSave}
+                disabled={uploadMutation.isPending || (newVideoQueue.length === 0 && !isManageMode)}
                 className="bg-[#FF6D1F] hover:scale-105 active:scale-95 transition-all text-[#FAF3E1] text-sm font-semibold rounded-[12px] px-6 py-2.5 shadow-lg shadow-orange-500/20 flex items-center gap-2 disabled:opacity-70 disabled:scale-100 disabled:cursor-not-allowed"
               >
                 {uploadMutation.isPending ? (
                    <>
-                     <span className="material-symbols-outlined animate-spin text-[20px]">cloud_upload</span>
-                     <span>Uploading...</span>
+                     <span className="material-symbols-outlined animate-spin text-[20px]">sync</span>
+                     <span>Saving...</span>
                    </>
                 ) : (
                    <>
-                     <span className="material-symbols-outlined text-[20px]">cloud_upload</span>
-                     <span>Upload ({videoQueue.length} videos)</span>
+                     <span className="material-symbols-outlined text-[20px]">save</span>
+                     <span>Save Changes</span>
                    </>
                 )}
               </button>

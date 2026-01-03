@@ -46,11 +46,15 @@ export const createCourse = (formData) =>
 
 // Update existing course
 export const updateCourse = (courseId, formData) => 
-  apiMultipart.put(`/courses/${courseId}`, formData).then((r) => r.data);
+  apiMultipart.put(`/instructor/courses/${courseId}`, formData).then((r) => r.data);
 
 // Add videos to a course
 export const addVideosToCourse = (courseId, formData) => 
   apiMultipart.post(`/instructor/courses/${courseId}/add-video`, formData).then((r) => r.data);
+
+// Manage course videos (Update/Add/Replace)
+export const manageCourseVideos = (courseId, formData) => 
+  apiMultipart.put(`/instructor/courses/${courseId}/manage-videos`, formData).then((r) => r.data);
 
 // Fetch details of a specific course
 export const getCourseDetails = (courseId) =>
