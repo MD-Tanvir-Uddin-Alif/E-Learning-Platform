@@ -38,7 +38,15 @@ export const deleteCategory = (id) =>
   api.delete(`/admin/delete-category/${id}`).then((r) => r.data);
 
 
+// --------------Course API--------------
+// Create a new course
+export const createCourse = (formData) => 
+  apiMultipart.post('/instructor/create-course', formData).then((r) => r.data);
 
+
+// Add videos to a course
+export const addVideosToCourse = (courseId, formData) => 
+  apiMultipart.post(`/instructor/courses/${courseId}/add-video`, formData).then((r) => r.data);
 
 
 // Fetch all users

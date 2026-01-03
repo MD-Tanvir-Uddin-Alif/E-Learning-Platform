@@ -25,8 +25,10 @@ const SideBar = () => {
   // 3. Define Role-Specific Items
   const roleSpecificItems = {
     instructor: [
-      { icon: 'add_circle', label: 'Add Course', to: '/courses/add' },
+      { icon: 'add_circle', label: 'Add Course', to: '/course/add' },
       { icon: 'menu_book', label: 'Courses', to: '/instructor/courses' },
+      // { icon: 'menu_book', label: 'Videos', to: '/video/add' },
+
     ],
     admin: [
       { icon: 'post_add', label: 'Add Category', to: '/add-category' },

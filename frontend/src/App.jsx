@@ -16,6 +16,9 @@ import About from './pages/About';
 import UserTable from './features/admin/UserTable';
 import AddCategory from './features/admin/AddCategory';
 import CategoryAdmin from './features/admin/CategoryAdmin';
+import CreateCourse from './features/instructor/CreateCourse';
+import AddVideos from './features/instructor/AddVideos';
+import MyCoursesGallery from './features/instructor/MyCoursesGallery';
 
 const router = createBrowserRouter([
   /* navbar + footer */
@@ -46,12 +49,15 @@ const router = createBrowserRouter([
       </ProtectedRoute>
     ),
     children: [
-      // When at /dashboard, show a welcome message or dashboard widgets
       { path: 'dashboard', element: <div className="p-10 text-2xl font-bold">Dashboard Home</div> }, 
-      // When at /users, UserTable renders beside the sidebar
+      // admin path
       { path: 'users', element: <UserTable /> },
       { path: 'add-category', element: <AddCategory />},
-      { path: 'admin-category', element: <CategoryAdmin />}
+      { path: 'admin-category', element: <CategoryAdmin />},
+      //instractor path
+      { path: 'course/add', element: <CreateCourse />},
+      { path: 'video/add', element: <AddVideos />},
+      { path: 'instructor/courses', element: <MyCoursesGallery />}
     ]
   },
 
