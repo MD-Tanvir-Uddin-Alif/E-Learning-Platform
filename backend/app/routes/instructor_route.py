@@ -17,7 +17,7 @@ from models.course_model import CourseModel
 from models.video_model import VideoModel
 from models.user_models import UserModel
 
-from schemas.course_schema import CourseCreate, CourseResponse, CourseOut, MultiVideoResponse
+from schemas.course_schema import CourseCreate, CourseResponse, CourseOut, MultiVideoResponse, CourseListResponse, CourseDetailResponse
 
 from utils.permission import instructor_required
 
@@ -88,30 +88,46 @@ def create_course(
 # -------------------------------
 # View Own Courses
 # -------------------------------
-@router.get("/my-courses", response_model=list[CourseOut])
+@router.get("/my-courses", response_model=List[CourseListResponse])
 def get_my_courses(
-    db: Session = Depends(get_db),
-    user: UserModel = Depends(instructor_required),
+    user = Depends(instructor_required),
+    db: Session = Depends(get_db)
 ):
+    """
+    Fetch all courses created by the logged-in instructor.
+    Returns: ID, Title, SubTitle, Image, Price, Paid Status
+    """
     courses = db.query(CourseModel).filter(
         CourseModel.instructor_id == user.id
     ).all()
 
-    result = []
-    for course in courses:
-        videos = [
-            {"url": video.video_url, "title": video.title} 
-            for video in course.videos
-        ]
-        result.append({
-            "id": course.id,
-            "title": course.title,
-            "videos": videos
-        })
-
-    return result
+    return courses
 
 
+# -------------------------------
+# GET SINGLE COURSE DETAILS 
+# -------------------------------
+@router.get("/courses/{course_id}", response_model=CourseDetailResponse)
+def get_course_details(
+    course_id: int,
+    user = Depends(instructor_required),
+    db: Session = Depends(get_db)
+):
+    """
+    Fetch details of a specific course + its videos.
+    Only allows access if the course belongs to the logged-in instructor.
+    """
+    course = db.query(CourseModel).filter(
+        CourseModel.id == course_id,
+        CourseModel.instructor_id == user.id
+    ).first()
+
+    if not course:
+        raise HTTPException(status_code=404, detail="Course not found or unauthorized")
+    
+    # SQLAlchemy relationship 'videos' will be automatically populated 
+    # and validated by Pydantic 'CourseDetailResponse'
+    return course
 
 
 # -------------------------------

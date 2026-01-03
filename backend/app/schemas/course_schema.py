@@ -36,6 +36,18 @@ class CourseResponse(BaseModel):
         orm_mode = True
 
 
+class CourseListResponse(BaseModel):
+    id: int
+    title: str
+    sub_title: str | None
+    image_url: str | None
+    is_paid: bool
+    price: float | None
+    
+    class Config:
+        orm_mode = True
+
+
 
 class VideoOut(BaseModel):
     url: Optional[str] = None
@@ -63,3 +75,8 @@ class MultiVideoResponse(BaseModel):
     message: str
     uploaded_count: int
     videos: list[VideoResponse]
+
+
+
+class CourseDetailResponse(CourseResponse):
+    videos: list[VideoResponse] = []
