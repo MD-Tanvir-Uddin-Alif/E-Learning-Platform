@@ -20,6 +20,8 @@ import CreateCourse from './features/instructor/CreateCourse';
 import AddVideos from './features/instructor/AddVideos';
 import MyCoursesGallery from './features/instructor/MyCoursesGallery';
 import InstructorCourseOverview from './features/instructor/InstructorCourseOverview';
+import CourseCatalog from './pages/CourseCatalog';
+import CourseDetails from './pages/CourseDetails';
 
 const router = createBrowserRouter([
   /* navbar + footer */
@@ -38,7 +40,10 @@ const router = createBrowserRouter([
       { path: 'registration', element: <Register/> },
       { path: 'login', element: <Login/> },
       { path: 'verify-email', element: <EmailVerification/> },
-      { path: 'profile', element: <ProtectedRoute><Profile/></ProtectedRoute> }
+      { path: 'profile', element: <ProtectedRoute><Profile/></ProtectedRoute> },
+      { path: 'courses', element: <CourseCatalog />},
+      { path: 'course/details', element: <CourseDetails />},
+
     ],
   },
 

@@ -94,9 +94,9 @@ const Navbar = () => {
           
           <div className="hidden items-center gap-8 md:flex text-[#222222]">
             <NavLink to="/about" className={({ isActive }) =>`text-sm font-medium transition-colors ${isActive ? 'text-[#FF6D1F]' : 'text-[#222222]/80 hover:text-[#FF6D1F]'}`}>About</NavLink>
-            <a href="#" className="text-sm font-medium hover:text-[#FF6D1F] transition-colors">Courses</a>
-            <a href="#" className="text-sm font-medium hover:text-[#FF6D1F] transition-colors">Mentors</a>
-            <a href="#" className="text-sm font-medium hover:text-[#FF6D1F] transition-colors">Enterprise</a>
+            <NavLink to="/courses" className={({ isActive }) =>`text-sm font-medium transition-colors ${isActive ? 'text-[#FF6D1F]' : 'text-[#222222]/80 hover:text-[#FF6D1F]'}`}>Courses</NavLink>
+            {/* <a href="#" className="text-sm font-medium hover:text-[#FF6D1F] transition-colors">Mentors</a> */}
+            {/* <a href="#" className="text-sm font-medium hover:text-[#FF6D1F] transition-colors">Enterprise</a> */}
           </div>
         </div>
         

@@ -91,3 +91,89 @@ def get_public_courses(
         "count": len(result),
         "courses": result
     }
+
+
+@router.get("/public/courses/{course_id}")
+def get_public_course_details(
+    course_id: int,
+    db: Session = Depends(get_db)
+):
+    """
+    Fetch details of a single published course including:
+    - Instructor Info (with Headline)
+    - Category Name
+    - List of Videos
+    - Ratings and Reviews
+    """
+    
+    # Query Course + Instructor + Category
+    course_data = db.query(
+        CourseModel,
+        CategoryModel.name.label("category_name"),
+        UserModel.first_name,
+        UserModel.last_name,
+        UserModel.profile_image,
+        UserModel.headline
+    ).join(
+        UserModel, CourseModel.instructor_id == UserModel.id
+    ).join(
+        CategoryModel, CourseModel.category_id == CategoryModel.id
+    ).filter(
+        CourseModel.id == course_id,
+        CourseModel.is_published == True # Ensure it's public
+    ).first()
+
+    if not course_data:
+        raise HTTPException(status_code=404, detail="Course not found")
+
+    course, cat_name, fname, lname, p_image, headline = course_data
+
+    # --- Fetch Ratings & Calculate Average ---
+    ratings = db.query(RatingModel).filter(RatingModel.course_id == course_id).all()
+    
+    total_ratings = len(ratings)
+    average_rating = 0.0
+    
+    if total_ratings > 0:
+        average_rating = round(sum(r.rating for r in ratings) / total_ratings, 1)
+
+    # Build Reviews List
+    reviews = []
+    for r in ratings:
+        reviews.append({
+            "id": r.id,
+            "user_name": f"{r.user.first_name} {r.user.last_name}",
+            "user_image": r.user.profile_image,
+            "rating": r.rating,
+            "comment": r.comment,
+            "created_at": r.created_at
+        })
+
+    # Sort videos by order
+    videos_sorted = sorted(course.videos, key=lambda v: v.order if v.order else 0)
+
+    return {
+        "id": course.id,
+        "title": course.title,
+        "sub_title": course.sub_title,
+        "description": course.description,
+        "is_paid": course.is_paid,
+        "price": course.price if course.is_paid else 0.0,
+        "image_url": course.image_url,
+        "category": cat_name,
+        "rating": average_rating,       # Added
+        "total_ratings": total_ratings, # Added
+        "instructor_id": course.instructor_id,
+        "instructor_name": f"{fname} {lname}",
+        "instructor_image": p_image,
+        "instructor_headline": headline,
+        "videos": [
+            {
+                "id": v.id,
+                "title": v.title,
+                "video_url": v.video_url
+            }
+            for v in videos_sorted
+        ],
+        "reviews": reviews # Added
+    }
