@@ -227,8 +227,38 @@ def update_course(
     return course
 
 
+# -------------------------------
+# PUBLISH COURSE (NEW ROUTE)
+# -------------------------------
+@router.put("/courses/{course_id}/publish")
+def publish_course(
+    course_id: int,
+    publish_status: bool = True, 
+    user = Depends(instructor_required),
+    db: Session = Depends(get_db)
+):
+    """
+    Publish a course to make it visible to students.
+    """
+    course = db.query(CourseModel).filter(
+        CourseModel.id == course_id,
+        CourseModel.instructor_id == user.id
+    ).first()
 
+    if not course:
+        raise HTTPException(status_code=404, detail="Course not found or unauthorized")
 
+    # Optional: Check if course has content before publishing
+    if publish_status is True:
+        video_count = db.query(VideoModel).filter(VideoModel.course_id == course_id).count()
+        if video_count == 0:
+             raise HTTPException(status_code=400, detail="Cannot publish an empty course. Add at least one video.")
+
+    course.is_published = publish_status
+    db.commit()
+
+    status_msg = "Published" if publish_status else "Unpublished (Draft)"
+    return {"message": f"Course has been {status_msg}", "is_published": course.is_published}
 
 # -------------------------------
 # Add video in Course

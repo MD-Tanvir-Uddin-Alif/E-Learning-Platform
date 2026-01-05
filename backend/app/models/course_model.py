@@ -12,6 +12,7 @@ class CourseModel(Base):
     description = Column(String(500), nullable=True)
     is_paid = Column(Boolean, default=False)
     price = Column(Float, nullable=True)
+    is_published = Column(Boolean, default=False) 
     image_url = Column(String(255), nullable=True) 
     instructor_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     category_id = Column(Integer, ForeignKey("categories.id"), nullable=False)
