@@ -37,7 +37,7 @@ def get_all_categories(db: Session = Depends(get_db)):
 # -------------------------------
 # Get all Courses
 # -------------------------------
-@router.get("/public/courses")
+@router.get("/courses")
 def get_public_courses(
     db: Session = Depends(get_db)
 ):
@@ -93,7 +93,7 @@ def get_public_courses(
     }
 
 
-@router.get("/public/courses/{course_id}")
+@router.get("/courses/{course_id}")
 def get_public_course_details(
     course_id: int,
     db: Session = Depends(get_db)

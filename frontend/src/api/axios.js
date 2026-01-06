@@ -66,6 +66,16 @@ export const getMyCourses = () =>
 
 
 
+// --- PUBLIC ROUTES ---
+
+// Fetch all public courses
+export const getPublicCourses = () => 
+  api.get('/public/courses').then((r) => r.data);
+
+// Fetch public course details
+export const getPublicCourseDetails = (courseId) => 
+  api.get(`/public/courses/${courseId}`).then((r) => r.data);
+
 
 
 

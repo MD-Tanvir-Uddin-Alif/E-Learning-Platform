@@ -42,7 +42,7 @@ const router = createBrowserRouter([
       { path: 'verify-email', element: <EmailVerification/> },
       { path: 'profile', element: <ProtectedRoute><Profile/></ProtectedRoute> },
       { path: 'courses', element: <CourseCatalog />},
-      { path: 'course/details', element: <CourseDetails />},
+      { path: 'courses/:courseId', element: <CourseDetails />},
 
     ],
   },
