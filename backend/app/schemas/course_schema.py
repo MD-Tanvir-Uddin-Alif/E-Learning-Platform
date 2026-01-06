@@ -29,6 +29,7 @@ class CourseResponse(BaseModel):
     is_paid: bool
     price: float | None
     category_id: int
+    is_published: bool 
     instructor_id: int
     image_url: str | None
 

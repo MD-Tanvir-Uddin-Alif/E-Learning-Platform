@@ -64,6 +64,9 @@ export const getCourseDetails = (courseId) =>
 export const getMyCourses = () => 
   api.get('/instructor/my-courses').then((r) => r.data);
 
+// Publish Course
+export const publishCourse = (courseId, status) => 
+  api.put(`/instructor/courses/${courseId}/publish?publish_status=${status}`).then((r) => r.data);
 
 
 // --- PUBLIC ROUTES ---

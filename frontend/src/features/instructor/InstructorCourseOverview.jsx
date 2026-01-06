@@ -1,7 +1,7 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
-import { getCourseDetails, getAllCategories } from '../../api/axios'; 
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { getCourseDetails, getAllCategories, publishCourse } from '../../api/axios'; 
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000';
 
@@ -15,6 +15,15 @@ const getMediaUrl = (path) => {
 export default function InstructorCourseOverview() {
   const { courseId } = useParams();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
+
+  // --- Toast State ---
+  const [toast, setToast] = useState(null); 
+  const showToast = (type, title, message) => {
+    setToast({ type, title, message });
+    setTimeout(() => setToast(null), 4000);
+  };
+  const closeToast = () => setToast(null);
 
   // 1. Fetch Course Details
   const { data: course, isLoading, isError } = useQuery({
@@ -29,9 +38,66 @@ export default function InstructorCourseOverview() {
     queryFn: getAllCategories,
   });
 
+  // 3. Publish Mutation
+  const publishMutation = useMutation({
+    mutationFn: (status) => publishCourse(courseId, status),
+    onSuccess: (data) => {
+      // Invalidate query to refresh UI state
+      queryClient.invalidateQueries(['course-details', courseId]);
+      
+      const action = data.is_published ? 'Published' : 'Unpublished';
+      showToast('success', `Course ${action}`, `Your course is now ${action.toLowerCase()}.`);
+    },
+    onError: (err) => {
+      const msg = err.response?.data?.detail || 'Failed to update course status';
+      showToast('error', 'Action Failed', msg);
+    }
+  });
+
+  const handlePublishToggle = () => {
+    // Toggle the current status
+    const newStatus = !course.is_published;
+    // Optional client-side validation
+    if (newStatus === true && (!course.videos || course.videos.length === 0)) {
+       showToast('error', 'Cannot Publish', 'Please add at least one video before publishing.');
+       return;
+    }
+    publishMutation.mutate(newStatus);
+  };
+
   const getCategoryName = (id) => {
     const cat = categories.find((c) => c.id === id);
     return cat ? cat.name : `Category #${id}`;
+  };
+
+  // --- Render Toast ---
+  const renderToast = () => {
+    if (!toast) return null;
+    const isError = toast.type === 'error';
+    const isSuccess = toast.type === 'success';
+    return (
+      <div className="fixed top-5 right-5 z-[70] animate-[slideDown_0.3s_ease-out]">
+        <div className="pointer-events-auto relative w-[320px] overflow-hidden rounded-xl bg-[#F5E7C6] shadow-xl border border-[#ead7cd]">
+          <div className="flex items-start gap-3 p-4 pr-10">
+            <div className={`flex size-6 shrink-0 items-center justify-center rounded-full text-white ${isError ? 'bg-red-500' : isSuccess ? 'bg-[#FF6D1F]' : 'bg-blue-500'}`}>
+              <span className="material-symbols-outlined text-[16px] font-bold">
+                {isError ? 'priority_high' : isSuccess ? 'check' : 'info'}
+              </span>
+            </div>
+            <div className="flex flex-col gap-1">
+              <h3 className="font-display text-sm font-semibold text-[#222222]">{toast.title}</h3>
+              <p className="font-display text-xs text-[#222222]/80 leading-normal">{toast.message}</p>
+            </div>
+            <button onClick={closeToast} className="absolute right-3 top-3 flex items-center justify-center text-[#222222]/40 hover:text-[#FF6D1F]">
+              <span className="material-symbols-outlined text-[16px]">close</span>
+            </button>
+          </div>
+          <div className="h-[3px] w-full bg-[#FAF3E1]">
+            <div className={`h-full w-full ${isError ? 'bg-red-500' : isSuccess ? 'bg-[#FF6D1F]' : 'bg-blue-500'}`}></div>
+          </div>
+        </div>
+      </div>
+    );
   };
 
   if (isLoading) return <div className="p-10 text-center text-[#222222]/60 font-['Lexend']">Loading details...</div>;
@@ -49,6 +115,9 @@ export default function InstructorCourseOverview() {
       <link rel="preconnect" href="https://fonts.googleapis.com" />
       <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
       <link href="https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600;700&family=Material+Symbols+Outlined:opsz,wght,FILL@20..48,100..700,0..1&display=swap" rel="stylesheet" />
+      <style>{`@keyframes slideDown { from { transform: translateY(-100%); opacity: 0; } to { transform: translateY(0); opacity: 1; } }`}</style>
+
+      {renderToast()}
 
       <div className="min-h-screen bg-[#FAF3E1]/30 font-['Lexend'] text-[#222222]">
         
@@ -70,10 +139,25 @@ export default function InstructorCourseOverview() {
                 <span className="material-symbols-outlined text-[18px]">edit</span>
                 Edit Details
               </button>
+              
+              {/* PUBLISH BUTTON */}
               <button 
-                className="flex h-10 items-center gap-2 rounded-lg bg-[#222222] px-4 text-sm font-bold text-white shadow-lg hover:bg-black transition-colors"
+                onClick={handlePublishToggle}
+                disabled={publishMutation.isPending}
+                className={`flex h-10 items-center gap-2 rounded-lg px-4 text-sm font-bold text-white shadow-lg transition-all ${
+                  course.is_published 
+                    ? 'bg-green-600 hover:bg-green-700' 
+                    : 'bg-[#222222] hover:bg-black'
+                } disabled:opacity-70 disabled:cursor-not-allowed`}
               >
-                Publish
+                {publishMutation.isPending ? (
+                   <span className="material-symbols-outlined animate-spin text-[18px]">sync</span>
+                ) : (
+                   <span className="material-symbols-outlined text-[18px]">
+                     {course.is_published ? 'check_circle' : 'publish'}
+                   </span>
+                )}
+                {course.is_published ? 'Published' : 'Publish'}
               </button>
             </div>
           </div>
@@ -98,6 +182,13 @@ export default function InstructorCourseOverview() {
                      </div>
                    )}
                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent md:bg-gradient-to-r" />
+                   
+                   {/* Publish Badge Overlay */}
+                   <div className="absolute top-4 left-4">
+                      <span className={`px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wide shadow-md ${course.is_published ? 'bg-green-500 text-white' : 'bg-yellow-400 text-black'}`}>
+                        {course.is_published ? 'Live' : 'Draft'}
+                      </span>
+                   </div>
                 </div>
 
                 <div className="flex flex-col p-8 md:col-span-7 md:p-10">
@@ -166,7 +257,7 @@ export default function InstructorCourseOverview() {
                     state: { 
                         courseId: course.id, 
                         courseTitle: course.title,
-                        existingVideos: course.videos // Passing existing videos triggers "Manage Mode"
+                        existingVideos: course.videos 
                     } 
                 })}
                 className="group flex items-center gap-1 text-sm font-bold text-[#FF6D1F] hover:underline"
