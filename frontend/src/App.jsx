@@ -22,6 +22,7 @@ import MyCoursesGallery from './features/instructor/MyCoursesGallery';
 import InstructorCourseOverview from './features/instructor/InstructorCourseOverview';
 import CourseCatalog from './pages/CourseCatalog';
 import CourseDetails from './pages/CourseDetails';
+import StudentCourseDashboard from './features/student/StudentCourseDashboard';
 
 const router = createBrowserRouter([
   /* navbar + footer */
@@ -43,6 +44,7 @@ const router = createBrowserRouter([
       { path: 'profile', element: <ProtectedRoute><Profile/></ProtectedRoute> },
       { path: 'courses', element: <CourseCatalog />},
       { path: 'courses/:courseId', element: <CourseDetails />},
+      { path: 'student/course', element: <StudentCourseDashboard />}
 
     ],
   },

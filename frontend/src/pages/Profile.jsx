@@ -321,7 +321,7 @@ const Profile = () => {
                 </a>
                 <a className="flex items-center gap-2 border-b-[3px] border-transparent text-[#222222]/60 hover:text-[#FF6D1F] transition-colors pb-3 px-1" href="#">
                   <span className="material-symbols-outlined text-xl">menu_book</span>
-                  <p className="text-sm font-medium tracking-wide">My Courses</p>
+                  <Link to="/student/course" className="text-sm font-medium tracking-wide">My Courses</Link>
                 </a>
                 {user?.role !== 'user' &&(<Link to='/dashboard' className="flex items-center gap-2 border-b-[3px] border-transparent text-[#222222]/60 hover:text-[#FF6D1F] transition-colors pb-3 px-1" href="#">
                   <span className="material-symbols-outlined text-xl">dashboard</span>
