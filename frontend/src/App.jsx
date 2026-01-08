@@ -23,6 +23,7 @@ import InstructorCourseOverview from './features/instructor/InstructorCourseOver
 import CourseCatalog from './pages/CourseCatalog';
 import CourseDetails from './pages/CourseDetails';
 import StudentCourseDashboard from './features/student/StudentCourseDashboard';
+import VideoPlayer from './features/student/VideoPlayer';
 
 const router = createBrowserRouter([
   /* navbar + footer */
@@ -44,7 +45,8 @@ const router = createBrowserRouter([
       { path: 'profile', element: <ProtectedRoute><Profile/></ProtectedRoute> },
       { path: 'courses', element: <CourseCatalog />},
       { path: 'courses/:courseId', element: <CourseDetails />},
-      { path: 'student/course', element: <StudentCourseDashboard />}
+      { path: 'student/course', element: <StudentCourseDashboard />},
+      { path: 'course/video', element: <VideoPlayer />}
 
     ],
   },

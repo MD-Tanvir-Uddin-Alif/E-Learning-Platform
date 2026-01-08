@@ -105,6 +105,18 @@ export const unblockUser = async (userId) => {
   return response.data;
 };
 
+
+
+
+// --- STUDENT ROUTES ---
+
+// Fetch user enrollments
+export const getMyEnrollments = () =>
+  api.get('/user/my-enrollments').then((r) => r.data);
+
+
+
+
 // Interceptor Logic
 const authInterceptor = (config) => {
   const token = localStorage.getItem('token');
