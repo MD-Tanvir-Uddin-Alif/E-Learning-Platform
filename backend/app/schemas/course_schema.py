@@ -81,3 +81,16 @@ class MultiVideoResponse(BaseModel):
 
 class CourseDetailResponse(CourseResponse):
     videos: list[VideoResponse] = []
+
+
+class EnrolledCourseResponse(BaseModel):
+    id: int
+    title: str
+    sub_title: str | None
+    image_url: str | None
+    instructor_name: str | None
+    category_name: str | None
+    progress: float = 0.0 
+    
+    class Config:
+        orm_mode = True
