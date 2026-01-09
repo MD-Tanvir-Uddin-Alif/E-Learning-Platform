@@ -115,6 +115,19 @@ export const getMyEnrollments = () =>
   api.get('/user/my-enrollments').then((r) => r.data);
 
 
+// Fetch enrolled course details (Video URLs & Info)
+export const getEnrolledCourseDetails = (courseId) => 
+  api.get(`/user/my-courses/${courseId}`).then((r) => r.data);
+
+// Fetch course progress (Watched status)
+export const getCourseProgress = (courseId) =>
+  api.get(`/progress/courses/${courseId}/progress`).then((r) => r.data);
+
+// Update video progress
+export const updateVideoProgress = (videoId, watched) => 
+  api.post(`/progress/videos/${videoId}/progress?watched=${watched}`).then((r) => r.data);
+
+
 
 
 // Interceptor Logic

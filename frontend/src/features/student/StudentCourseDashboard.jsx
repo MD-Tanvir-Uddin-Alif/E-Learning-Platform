@@ -1,6 +1,7 @@
 import React from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { getMyEnrollments } from '../../api/axios'; // Adjust path if needed
+import { useNavigate } from 'react-router-dom';
+import { getMyEnrollments } from '../../api/axios'; // Updated import path
 
 // Base URL for images
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000';
@@ -13,11 +14,18 @@ const getImageUrl = (path) => {
 };
 
 export default function StudentCourseDashboard() {
+  const navigate = useNavigate();
+
   // Fetch Enrollments
   const { data: enrollments = [], isLoading, isError } = useQuery({
     queryKey: ['my-enrollments'],
     queryFn: getMyEnrollments,
   });
+
+  const handleResume = (courseId) => {
+    // Navigate to the video player route
+    navigate(`/learn/${courseId}`);
+  };
 
   return (
     <div className="flex h-screen w-full font-['Lexend']">
@@ -40,7 +48,6 @@ export default function StudentCourseDashboard() {
 
             {/* Stats Row */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-              {/* card 1 */}
               <div
                 className="p-6 rounded-xl flex flex-col gap-1 shadow-sm border"
                 style={{ backgroundColor: '#F5E7C6', borderColor: '#F5E7C6' }}
@@ -48,27 +55,15 @@ export default function StudentCourseDashboard() {
                 <p className="font-medium" style={{ color: '#222222' }}>Courses in Progress</p>
                 <p className="text-3xl font-bold" style={{ color: '#FF6D1F' }}>{enrollments.length}</p>
               </div>
-              {/* card 2 */}
-              <div
-                className="p-6 rounded-xl flex flex-col gap-1 shadow-sm border bg-white"
-                style={{ borderColor: '#F5E7C6' }}
-              >
+              <div className="p-6 rounded-xl flex flex-col gap-1 shadow-sm border bg-white" style={{ borderColor: '#F5E7C6' }}>
                 <p className="font-medium" style={{ color: 'rgba(34,34,34,.6)' }}>Completed</p>
-                <p className="text-3xl font-bold" style={{ color: '#222222' }}>0</p> {/* Placeholder for completed count */}
+                <p className="text-3xl font-bold" style={{ color: '#222222' }}>0</p>
               </div>
-              {/* card 3 */}
-              <div
-                className="p-6 rounded-xl flex flex-col gap-1 shadow-sm border bg-white"
-                style={{ borderColor: '#F5E7C6' }}
-              >
+              <div className="p-6 rounded-xl flex flex-col gap-1 shadow-sm border bg-white" style={{ borderColor: '#F5E7C6' }}>
                 <p className="font-medium" style={{ color: 'rgba(34,34,34,.6)' }}>Certificates</p>
                 <p className="text-3xl font-bold" style={{ color: '#222222' }}>0</p>
               </div>
-              {/* card 4 */}
-              <div
-                className="p-6 rounded-xl flex flex-col gap-1 shadow-sm border bg-white"
-                style={{ borderColor: '#F5E7C6' }}
-              >
+              <div className="p-6 rounded-xl flex flex-col gap-1 shadow-sm border bg-white" style={{ borderColor: '#F5E7C6' }}>
                 <p className="font-medium" style={{ color: 'rgba(34,34,34,.6)' }}>Learning Hours</p>
                 <p className="text-3xl font-bold" style={{ color: '#222222' }}>0h</p>
               </div>
@@ -83,25 +78,21 @@ export default function StudentCourseDashboard() {
                   <button className="text-sm font-bold text-[#FF6D1F] hover:underline">View All</button>
                 </div>
 
-                {/* Loading State */}
                 {isLoading && <div className="p-10 text-center text-[#222222]/50">Loading enrollments...</div>}
-
-                {/* Error State */}
                 {isError && <div className="p-10 text-center text-red-500">Failed to load courses.</div>}
 
-                {/* Empty State */}
                 {!isLoading && !isError && enrollments.length === 0 && (
                    <div className="p-10 text-center border-2 border-dashed border-[#F5E7C6] rounded-xl bg-white">
                       <p className="text-[#222222]/50 font-medium">You haven't enrolled in any courses yet.</p>
                    </div>
                 )}
 
-                {/* Course List */}
                 <div className="flex flex-col gap-4">
                   {enrollments.map((course) => (
                     <div
                       key={course.id}
-                      className="group flex flex-col sm:flex-row gap-4 p-4 rounded-2xl bg-white border shadow-sm transition-all hover:shadow-md"
+                      onClick={() => handleResume(course.id)}
+                      className="group flex flex-col sm:flex-row gap-4 p-4 rounded-2xl bg-white border shadow-sm transition-all hover:shadow-md cursor-pointer"
                       style={{ borderColor: '#F5E7C6' }}
                     >
                       {/* Thumbnail */}
@@ -123,9 +114,7 @@ export default function StudentCourseDashboard() {
                       {/* Info */}
                       <div className="flex-1 flex flex-col">
                         <div className="flex justify-between items-start mb-2">
-                          <span
-                            className="text-[10px] uppercase font-bold tracking-wider px-2 py-1 rounded bg-[#FAF3E1] text-[#222222]/60"
-                          >
+                          <span className="text-[10px] uppercase font-bold tracking-wider px-2 py-1 rounded bg-[#FAF3E1] text-[#222222]/60">
                             {course.category_name || 'Course'}
                           </span>
                           <button className="text-[#222222]/30 hover:text-[#FF6D1F]">
@@ -154,6 +143,10 @@ export default function StudentCourseDashboard() {
                             </div>
                           </div>
                           <button
+                            onClick={(e) => {
+                                e.stopPropagation(); 
+                                handleResume(course.id);
+                            }}
                             className="w-full py-2.5 rounded-lg text-sm font-bold hover:bg-opacity-90 transition-opacity"
                             style={{ backgroundColor: '#FF6D1F', color: '#FAF3E1' }}
                           >
@@ -166,9 +159,8 @@ export default function StudentCourseDashboard() {
                 </div>
               </div>
 
-              {/* Right Column: Placeholder for future widgets */}
+              {/* Right Column */}
               <div className="w-full xl:w-96 shrink-0 hidden xl:block">
-                 {/* You can add calendar, tasks, or other widgets here */}
                  <div className="p-6 bg-white rounded-xl border border-[#F5E7C6] h-full flex items-center justify-center text-[#222222]/40 font-medium text-sm">
                     Additional Widgets Area
                  </div>
