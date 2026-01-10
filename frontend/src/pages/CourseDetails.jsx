@@ -1,7 +1,7 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
-import { getPublicCourseDetails } from '../api/axios';
+import { useQuery, useMutation } from '@tanstack/react-query';
+import { getPublicCourseDetails, initiatePayment } from '../api/axios'; // Use correct import path
 
 // Base URL for images/media
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000';
@@ -16,6 +16,14 @@ const getMediaUrl = (path) => {
 export default function CourseDetail() {
   const { courseId } = useParams();
   const navigate = useNavigate();
+  
+  // --- Toast State ---
+  const [toast, setToast] = useState(null); 
+  const showToast = (type, title, message) => {
+    setToast({ type, title, message });
+    setTimeout(() => setToast(null), 4000);
+  };
+  const closeToast = () => setToast(null);
 
   // Fetch Public Course Details
   const { data: course, isLoading, isError } = useQuery({
@@ -23,6 +31,80 @@ export default function CourseDetail() {
     queryFn: () => getPublicCourseDetails(courseId),
     enabled: !!courseId,
   });
+
+  // Payment Mutation
+  const paymentMutation = useMutation({
+    mutationFn: () => initiatePayment(courseId),
+    onSuccess: (data) => {
+      if (data.type === 'free_enrollment') {
+        showToast('success', 'Enrolled Successfully', 'You have been enrolled in this free course.');
+        // Redirect to dashboard/my-courses after a short delay
+        setTimeout(() => navigate('student/course'), 1500);
+      } else if (data.type === 'payment_redirect' && data.GatewayPageURL) {
+        // Redirect to SSLCommerz
+        window.location.href = data.GatewayPageURL;
+      }
+    },
+    onError: (err) => {
+      const msg = err.response?.data?.detail || 'Failed to initiate enrollment';
+      // If user is already enrolled (400), maybe redirect them or just show error
+      if (err.response?.status === 400 && msg.includes("already enrolled")) {
+         showToast('info', 'Already Enrolled', 'Redirecting to your dashboard...');
+         setTimeout(() => navigate('/student/course'), 1500);
+      } else {
+         showToast('error', 'Enrollment Failed', msg);
+      }
+    }
+  });
+
+  const handleEnroll = (e) => {
+    e.preventDefault();
+    // Assuming auth check is handled by axios interceptor or user should be logged in
+    // You might want to check for token here if your public page allows guests
+    const token = localStorage.getItem('token'); // Or use auth hook
+    if (!token) {
+      showToast('error', 'Login Required', 'Please log in to enroll in courses.');
+      setTimeout(() => navigate('/login', { state: { from: `/courses/${courseId}` } }), 1500);
+      return;
+    }
+    
+    paymentMutation.mutate();
+  };
+
+  // --- Render Toast ---
+  const renderToast = () => {
+    if (!toast) return null;
+    const isError = toast.type === 'error';
+    const isSuccess = toast.type === 'success';
+    const isInfo = toast.type === 'info';
+    
+    let bgColor = isSuccess ? 'bg-[#FF6D1F]' : isError ? 'bg-red-500' : 'bg-blue-500';
+    let icon = isSuccess ? 'check' : isError ? 'priority_high' : 'info';
+
+    return (
+      <div className="fixed top-5 right-5 z-[70] animate-[slideDown_0.3s_ease-out]">
+        <div className="pointer-events-auto relative w-[320px] overflow-hidden rounded-xl bg-[#F5E7C6] shadow-xl border border-[#ead7cd]">
+          <div className="flex items-start gap-3 p-4 pr-10">
+            <div className={`flex size-6 shrink-0 items-center justify-center rounded-full text-white ${bgColor}`}>
+              <span className="material-symbols-outlined text-[16px] font-bold">
+                {icon}
+              </span>
+            </div>
+            <div className="flex flex-col gap-1">
+              <h3 className="font-display text-sm font-semibold text-[#222222]">{toast.title}</h3>
+              <p className="font-display text-xs text-[#222222]/80 leading-normal">{toast.message}</p>
+            </div>
+            <button onClick={closeToast} className="absolute right-3 top-3 flex items-center justify-center text-[#222222]/40 hover:text-[#FF6D1F]">
+              <span className="material-symbols-outlined text-[16px]">close</span>
+            </button>
+          </div>
+          <div className="h-[3px] w-full bg-[#FAF3E1]">
+            <div className={`h-full w-full ${bgColor}`}></div>
+          </div>
+        </div>
+      </div>
+    );
+  };
 
   if (isLoading) return <div className="p-20 text-center font-bold text-[#222222]/50">Loading course details...</div>;
   if (isError || !course) return (
@@ -35,6 +117,9 @@ export default function CourseDetail() {
   return (
     <>
       <link href="https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600;700;800;900&family=Material+Symbols+Outlined:opsz,wght,FILL@20..48,100..700,0..1&display=swap" rel="stylesheet" />
+      <style>{`@keyframes slideDown { from { transform: translateY(-100%); opacity: 0; } to { transform: translateY(0); opacity: 1; } }`}</style>
+
+      {renderToast()}
 
       {/* ------------------  HERO  ------------------ */}
       <div className="py-12" style={{ backgroundColor: '#F5E7C6' }}>
@@ -75,13 +160,21 @@ export default function CourseDetail() {
             </div>
 
             <div className="flex items-center gap-4 pt-4">
-              <a
-                href="#enroll"
-                className="rounded-xl px-8 py-4 text-base font-bold text-white shadow-lg transition-transform hover:scale-105 active:scale-95"
+              <button
+                onClick={handleEnroll}
+                disabled={paymentMutation.isPending}
+                className="rounded-xl px-8 py-4 text-base font-bold text-white shadow-lg transition-transform hover:scale-105 active:scale-95 flex items-center gap-2 disabled:opacity-70 disabled:scale-100 disabled:cursor-not-allowed"
                 style={{ backgroundColor: '#222222' }}
               >
-                Enroll Now
-              </a>
+                {paymentMutation.isPending ? (
+                   <>
+                     <span className="material-symbols-outlined animate-spin text-[20px]">sync</span>
+                     Processing...
+                   </>
+                ) : (
+                   'Enroll Now'
+                )}
+              </button>
               <span className="text-3xl font-black" style={{ color: '#222222' }}>
                 {course.is_paid ? `$${course.price}` : 'Free'}
               </span>
@@ -238,11 +331,19 @@ export default function CourseDetail() {
             </div>
             
             <button
-              id="enroll"
-              className="w-full rounded-xl py-4 text-base font-bold text-white shadow-lg transition-all hover:-translate-y-0.5 active:translate-y-0"
+              onClick={handleEnroll}
+              disabled={paymentMutation.isPending}
+              className="w-full rounded-xl py-4 text-base font-bold text-white shadow-lg transition-all hover:-translate-y-0.5 active:translate-y-0 disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-2"
               style={{ backgroundColor: '#FF6D1F', boxShadow: '0 10px 15px -3px rgba(255, 109, 31, 0.2)' }}
             >
-              Enroll Now
+              {paymentMutation.isPending ? (
+                 <>
+                   <span className="material-symbols-outlined animate-spin text-[20px]">sync</span>
+                   Processing...
+                 </>
+              ) : (
+                 'Enroll Now'
+              )}
             </button>
             
             <ul className="flex flex-col gap-3 text-sm font-medium text-[#222222]/70">

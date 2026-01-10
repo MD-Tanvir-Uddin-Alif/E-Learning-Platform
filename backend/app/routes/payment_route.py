@@ -1,4 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException, status, Request
+from fastapi.responses import RedirectResponse
 from sqlalchemy.orm import Session
 from typing import List, Optional
 from dotenv import load_dotenv
@@ -26,6 +27,14 @@ SSLCOMMERZ_STORE_ID = os.getenv("SSLCOMMERZ_STORE_ID")
 SSLCOMMERZ_STORE_PASSWORD = os.getenv("SSLCOMMERZ_STORE_PASSWORD")
 SSLCOMMERZ_SESSION_API = os.getenv("SSLCOMMERZ_SESSION_API")
 SSLCOMMERZ_VALIDATION_API = os.getenv("SSLCOMMERZ_VALIDATION_API")
+
+
+# --- FRONTEND REDIRECT URL ---
+FRONTEND_SUCCESS_URL = "http://localhost:5173/student/course" # Redirect here on success
+FRONTEND_FAIL_URL = "http://localhost:5173/payment/fail"     # Optional: Create a fail page
+# -----------------------------
+
+
 
 @router.post("/purchase/{course_id}")
 def initiate_payment(
@@ -197,7 +206,9 @@ async def payment_success(
             
             db.commit()
             
-            return {"status": "success", "message": "Payment completed successfully"}
+            # return {"status": "success", "message": "Payment completed successfully"}
+            return RedirectResponse(url=FRONTEND_SUCCESS_URL, status_code=303) 
+
         else:
             payment.status = "failed"
             db.commit()

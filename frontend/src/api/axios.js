@@ -69,6 +69,11 @@ export const publishCourse = (courseId, status) =>
   api.put(`/instructor/courses/${courseId}/publish?publish_status=${status}`).then((r) => r.data);
 
 
+// Initiate Payment / Enrollment
+export const initiatePayment = (courseId) =>
+  api.post(`/payment/purchase/${courseId}`).then((r) => r.data);
+
+
 // --- PUBLIC ROUTES ---
 
 // Fetch all public courses
