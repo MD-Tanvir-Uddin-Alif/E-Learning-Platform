@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Request
 from sqlalchemy.orm import Session
 from typing import List, Optional
 from dotenv import load_dotenv
@@ -135,19 +135,38 @@ def initiate_payment(
 
 
 @router.post("/success/{transaction_id}")
-def payment_success(
+async def payment_success(
     transaction_id: str,
+    request: Request, # <--- Added Request object to read Form Data
     db: Session = Depends(get_db)
 ):
     """Handle successful payment"""
     
+    # 1. Find local payment record
     payment = db.query(PaymentModel).filter(PaymentModel.transaction_id == transaction_id).first()
     if not payment:
         raise HTTPException(status_code=404, detail="Payment not found")
     
-    # Validate payment with SSLCommerz
+    # 2. Extract val_id from SSLCommerz POST data
+    # This is critical: SSLCommerz sends 'val_id' in the body, not query params
+    try:
+        form_data = await request.form()
+        val_id = form_data.get('val_id')
+    except Exception:
+        val_id = None
+    
+    # If val_id is missing, we can't validate. 
+    # (Note: In Sandbox sometimes simply checking status works, but for production val_id is required)
+    if not val_id:
+        # Fallback for some sandbox scenarios where val_id might be missing or different
+        # But strictly we should fail here.
+        payment.status = "failed"
+        db.commit()
+        raise HTTPException(status_code=400, detail="Validation ID missing from payment gateway response")
+
+    # 3. Validate payment with SSLCommerz using val_id
     validation_params = {
-        'val_id': transaction_id,
+        'val_id': val_id, # <--- Use the extracted val_id
         'store_id': SSLCOMMERZ_STORE_ID,
         'store_passwd': SSLCOMMERZ_STORE_PASSWORD,
         'format': 'json'
@@ -157,28 +176,36 @@ def payment_success(
         response = requests.get(SSLCOMMERZ_VALIDATION_API, params=validation_params)
         validation_data = response.json()
         
-        if validation_data.get('status') == 'VALID':
+        if validation_data.get('status') == 'VALID' or validation_data.get('status') == 'VALIDATED':
             # Update payment status
             payment.status = "completed"
             payment.sslcommerz_response = json.dumps(validation_data)
             
-            # Create enrollment
-            enrollment = EnrollmentModel(
-                user_id=payment.user_id,
-                course_id=payment.course_id,
-                enrolled_at=datetime.utcnow()
-            )
-            db.add(enrollment)
+            # Create enrollment if not already exists
+            existing_enrollment = db.query(EnrollmentModel).filter(
+                EnrollmentModel.user_id == payment.user_id,
+                EnrollmentModel.course_id == payment.course_id
+            ).first()
+
+            if not existing_enrollment:
+                enrollment = EnrollmentModel(
+                    user_id=payment.user_id,
+                    course_id=payment.course_id,
+                    enrolled_at=datetime.utcnow()
+                )
+                db.add(enrollment)
+            
             db.commit()
             
             return {"status": "success", "message": "Payment completed successfully"}
         else:
             payment.status = "failed"
             db.commit()
-            raise HTTPException(status_code=400, detail="Payment validation failed")
+            raise HTTPException(status_code=400, detail="Payment validation failed during verification")
             
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Payment validation error: {str(e)}")
+
     
 
 

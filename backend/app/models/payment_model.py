@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, Float, Boolean
+from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, Float, Boolean, Text
 from sqlalchemy.orm import relationship
 from database_config import Base
 from datetime import datetime
@@ -15,7 +15,7 @@ class PaymentModel(Base):
     status = Column(String(50), default="pending")  
     payment_method = Column(String(50))
     payment_date = Column(DateTime, default=datetime.utcnow)
-    sslcommerz_response = Column(String(1000), nullable=True)
+    sslcommerz_response = Column(Text, nullable=True)
     
     user = relationship("UserModel")
     course = relationship("CourseModel")
