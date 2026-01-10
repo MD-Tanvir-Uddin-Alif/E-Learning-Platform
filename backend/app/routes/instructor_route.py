@@ -17,6 +17,7 @@ from models.category_model import CategoryModel
 from models.course_model import CourseModel
 from models.video_model import VideoModel
 from models.user_models import UserModel
+from models.enrollment_model import EnrollmentModel
 
 from schemas.course_schema import CourseCreate, CourseResponse, CourseOut, MultiVideoResponse, CourseListResponse, CourseDetailResponse
 
@@ -162,6 +163,12 @@ def update_course(
 
     if not course:
         raise HTTPException(status_code=404, detail="Course not found or unauthorized")
+    
+    if course.is_published:
+        raise HTTPException(
+            status_code=400, 
+            detail="Cannot update a published course. Unpublish it first to make changes."
+        )
 
     # 2. Update fields if provided
     if title is not None:
@@ -228,7 +235,7 @@ def update_course(
 
 
 # -------------------------------
-# PUBLISH COURSE (NEW ROUTE)
+# PUBLISH COURSE
 # -------------------------------
 @router.put("/courses/{course_id}/publish")
 def publish_course(
@@ -247,6 +254,17 @@ def publish_course(
 
     if not course:
         raise HTTPException(status_code=404, detail="Course not found or unauthorized")
+    
+    if publish_status is False: # If trying to UNPUBLISH
+        enrolled_count = db.query(EnrollmentModel).filter(
+            EnrollmentModel.course_id == course_id
+        ).count()
+        
+        if enrolled_count > 0:
+            raise HTTPException(
+                status_code=400, 
+                detail="Cannot unpublish this course because students are already enrolled."
+            )
 
     # Optional: Check if course has content before publishing
     if publish_status is True:
@@ -353,6 +371,9 @@ def manage_course_videos(
 
     if not course:
         raise HTTPException(status_code=404, detail="Course not found or unauthorized")
+    
+    if course.is_published:
+        raise HTTPException(status_code=400, detail="Cannot edit video details of a published course. Unpublish first.")
 
     # --- 2. Process Existing Video Updates (Title/Order) ---
     if video_updates:
