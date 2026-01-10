@@ -3,6 +3,7 @@
 # -------------------------------
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Form, status
 from fastapi.security import OAuth2PasswordBearer
+from fastapi.responses import RedirectResponse
 from datetime import datetime, timedelta
 from sqlalchemy.orm import Session
 from uuid import uuid4
@@ -104,7 +105,8 @@ def verify_email(token: str, db: Session = Depends(get_db)):
     user.token_expiry = None
     db.commit()
 
-    return {"message": "Email verified. You can now login."}
+    # return {"message": "Email verified. You can now login."}
+    return RedirectResponse(url="http://localhost:5173/login")
 
 
 
