@@ -6,15 +6,15 @@ import { getMyProfile } from '../api/auth';
 const SideBar = () => {
 
     const { data: user, isLoading, isError } = useQuery({
-    queryKey: ['me'],      // Unique cache key
-    queryFn: getMyProfile, // Your API function
-    retry: false,          // Don't retry if 401 (not logged in)
+    queryKey: ['me'],      
+    queryFn: getMyProfile, 
+    retry: false,        
   });
 
   // 1. Hide sidebar if loading, error (not logged in), no user data, or if role is just 'user'
   if (isLoading || isError || !user || user.role === 'user') return null;
 
-  const role = user.role; // 'instructor' or 'admin'
+  const role = user.role;
 
   // 2. Define Common Items (Visible to both)
   const baseItems = [

@@ -295,7 +295,7 @@ const Profile = () => {
                 </div>
 
                 {/* Stats (Static for demo) */}
-                <div className="flex gap-4 md:gap-8 justify-center md:justify-end py-4 border-t md:border-t-0 border-[#F5E7C6] w-full md:w-auto">
+                {/* <div className="flex gap-4 md:gap-8 justify-center md:justify-end py-4 border-t md:border-t-0 border-[#F5E7C6] w-full md:w-auto">
                   <div className="flex flex-col items-center">
                     <span className="text-2xl md:text-3xl font-bold text-[#FF6D1F]">12</span>
                     <span className="text-xs md:text-sm text-[#222222] font-medium uppercase tracking-wide opacity-80">Courses</span>
@@ -310,7 +310,7 @@ const Profile = () => {
                     <span className="text-2xl md:text-3xl font-bold text-[#FF6D1F]">8</span>
                     <span className="text-xs md:text-sm text-[#222222] font-medium uppercase tracking-wide opacity-80">Certs</span>
                   </div>
-                </div>
+                </div> */}
               </div>
 
               {/* Tabs */}
@@ -453,7 +453,7 @@ const Profile = () => {
                   <div className="space-y-2">
                     <label className="text-sm font-semibold text-[#222222]">Current Password</label>
                     <input
-                      className="w-full bg-[#F5E7C6] border-none rounded-lg px-4 py-3 text-[#222222] focus:ring-0 focus:border-2 focus:border-[#FF6D1F] transition-all"
+                      className="w-full bg-[#F5E7C6] border-none rounded-lg px-4 py-3 text-[#222222] focus:ring-0 focus:border-2 focus:border-[#FF6D1F] transition-all "
                       placeholder="••••••••"
                       type="password"
                       name="old_password"
@@ -484,7 +484,7 @@ const Profile = () => {
               </div>
 
               {/* Connected Accounts (Static) */}
-              <div className="bg-white p-6 rounded-2xl shadow-sm border border-[#ead7cd]">
+              {/* <div className="bg-white p-6 rounded-2xl shadow-sm border border-[#ead7cd]">
                 <h3 className="text-lg font-bold text-[#222222] mb-4">Connected Accounts</h3>
                 <div className="space-y-3">
                   <div className="flex items-center justify-between p-3 rounded-lg border border-[#F5E7C6] bg-[#F5E7C6]/30">
@@ -510,16 +510,16 @@ const Profile = () => {
                     <button className="text-xs text-[#FF6D1F] font-bold hover:underline">Connect</button>
                   </div>
                 </div>
-              </div>
+              </div> */}
 
               {/* Danger Zone (Static) */}
-              <div className="p-6 rounded-2xl border border-red-100 mt-4" style={{ backgroundColor: '#FAF3E1' }}>
+              {/* <div className="p-6 rounded-2xl border border-red-100 mt-4" style={{ backgroundColor: '#FAF3E1' }}>
                 <h3 className="text-sm font-bold text-red-600 uppercase tracking-wider mb-2">Danger Zone</h3>
                 <p className="text-xs text-[#222222]/70 mb-4">Once you delete your account, there is no going back. Please be certain.</p>
                 <button className="w-full py-2.5 rounded-lg border font-medium hover:bg-red-50 hover:border-red-300 transition-all text-sm" style={{ backgroundColor: '#FAF3E1', borderColor: '#fecaca', color: '#ef4444' }}>
                   Delete Account
                 </button>
-              </div>
+              </div> */}
             </div>
           </div>
         </div>

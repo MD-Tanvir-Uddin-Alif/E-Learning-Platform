@@ -17,6 +17,7 @@ from models.course_model import CourseModel
 from models.enrollment_model import EnrollmentModel
 from models.category_model import CategoryModel
 from models.video_model import VideoModel
+from models.video_progress_model import VideoProgressModel
 from schemas.course_schema import EnrolledCourseResponse
 from .auth_route import get_current_user 
 from database_config import get_db
@@ -131,6 +132,18 @@ def get_my_enrollments(
 
     result = []
     for enrollment, course, instructor, category in enrollments:
+        total_videos = db.query(VideoModel).filter(VideoModel.course_id == course.id).count()
+        
+        progress = 0.0
+        if total_videos > 0:
+            # 2. Get count of videos marked as watched by this user for this course
+            watched_count = db.query(VideoProgressModel).filter(
+                VideoProgressModel.user_id == current_user.id,
+                VideoProgressModel.course_id == course.id,
+                VideoProgressModel.watched == True
+            ).count()
+            
+            progress = (watched_count / total_videos) * 100
         result.append({
             "id": course.id,
             "title": course.title,
@@ -138,7 +151,7 @@ def get_my_enrollments(
             "image_url": course.image_url,
             "instructor_name": f"{instructor.first_name} {instructor.last_name}",
             "category_name": category.name,
-            "progress": 0.0 # You can link your progress logic here later
+            "progress": round(progress, 2) # You can link your progress logic here later
         })
     
     return result

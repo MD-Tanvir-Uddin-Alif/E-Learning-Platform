@@ -55,7 +55,7 @@ export default function StudentCourseDashboard() {
                 <p className="font-medium" style={{ color: '#222222' }}>Courses in Progress</p>
                 <p className="text-3xl font-bold" style={{ color: '#FF6D1F' }}>{enrollments.length}</p>
               </div>
-              <div className="p-6 rounded-xl flex flex-col gap-1 shadow-sm border bg-white" style={{ borderColor: '#F5E7C6' }}>
+              {/* <div className="p-6 rounded-xl flex flex-col gap-1 shadow-sm border bg-white" style={{ borderColor: '#F5E7C6' }}>
                 <p className="font-medium" style={{ color: 'rgba(34,34,34,.6)' }}>Completed</p>
                 <p className="text-3xl font-bold" style={{ color: '#222222' }}>0</p>
               </div>
@@ -66,7 +66,7 @@ export default function StudentCourseDashboard() {
               <div className="p-6 rounded-xl flex flex-col gap-1 shadow-sm border bg-white" style={{ borderColor: '#F5E7C6' }}>
                 <p className="font-medium" style={{ color: 'rgba(34,34,34,.6)' }}>Learning Hours</p>
                 <p className="text-3xl font-bold" style={{ color: '#222222' }}>0h</p>
-              </div>
+              </div> */}
             </div>
 
             {/* Content Split */}
@@ -160,11 +160,11 @@ export default function StudentCourseDashboard() {
               </div>
 
               {/* Right Column */}
-              <div className="w-full xl:w-96 shrink-0 hidden xl:block">
+              {/* <div className="w-full xl:w-96 shrink-0 hidden xl:block">
                  <div className="p-6 bg-white rounded-xl border border-[#F5E7C6] h-full flex items-center justify-center text-[#222222]/40 font-medium text-sm">
                     Additional Widgets Area
                  </div>
-              </div>
+              </div> */}
             </div>
           </div>
         </div>
