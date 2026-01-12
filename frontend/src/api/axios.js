@@ -133,6 +133,10 @@ export const updateVideoProgress = (videoId, watched) =>
   api.post(`/progress/videos/${videoId}/progress?watched=${watched}`).then((r) => r.data);
 
 
+// Get Course Certificate
+export const getCourseCertificate = (courseId) =>
+  api.get(`/user/courses/${courseId}/certificate`).then((r) => r.data);
+
 
 
 // Interceptor Logic

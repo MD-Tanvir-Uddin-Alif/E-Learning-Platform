@@ -24,6 +24,7 @@ import CourseCatalog from './pages/CourseCatalog';
 import CourseDetails from './pages/CourseDetails';
 import StudentCourseDashboard from './features/student/StudentCourseDashboard';
 import VideoPlayer from './features/student/VideoPlayer';
+import CertificateView from './features/student/CertificateView';
 
 const router = createBrowserRouter([
   /* navbar + footer */
@@ -45,8 +46,9 @@ const router = createBrowserRouter([
       { path: 'profile', element: <ProtectedRoute><Profile/></ProtectedRoute> },
       { path: 'courses', element: <CourseCatalog />},
       { path: 'courses/:courseId', element: <CourseDetails />},
-      { path: 'student/course', element: <StudentCourseDashboard />},
-      { path: 'learn/:courseId', element: <VideoPlayer /> }
+      { path: 'student/course', element: <ProtectedRoute><StudentCourseDashboard /></ProtectedRoute>},
+      { path: 'learn/:courseId', element: <ProtectedRoute><VideoPlayer /></ProtectedRoute> },
+      { path: 'certificate/:courseId', element: <ProtectedRoute><CertificateView /></ProtectedRoute>}
 
     ],
   },

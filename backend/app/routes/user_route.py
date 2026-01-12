@@ -12,13 +12,14 @@ import os
 # -------------------------------
 # Import From Files
 # -------------------------------
-from models.user_models import UserModel
-from models.course_model import CourseModel
-from models.enrollment_model import EnrollmentModel
-from models.category_model import CategoryModel
-from models.video_model import VideoModel
 from models.video_progress_model import VideoProgressModel
 from schemas.course_schema import EnrolledCourseResponse
+from schemas.course_schema import CertificateResponse
+from models.enrollment_model import EnrollmentModel
+from models.category_model import CategoryModel
+from models.course_model import CourseModel
+from models.user_models import UserModel
+from models.video_model import VideoModel
 from .auth_route import get_current_user 
 from database_config import get_db
 
@@ -204,4 +205,67 @@ def get_enrolled_course_details(
         "sub_title": course.sub_title,
         "description": course.description,
         "videos": video_list
+    }
+
+
+
+
+# -------------------------------
+# Get Course Certificate
+# -------------------------------
+@router.get("/courses/{course_id}/certificate", response_model=CertificateResponse)
+def get_course_certificate(
+    course_id: int,
+    db: Session = Depends(get_db),
+    current_user: UserModel = Depends(get_current_user)
+):
+    """
+    Validate completion and return certificate data.
+    """
+    # 1. Check Enrollment
+    enrollment = db.query(EnrollmentModel).filter(
+        EnrollmentModel.user_id == current_user.id,
+        EnrollmentModel.course_id == course_id
+    ).first()
+
+    if not enrollment:
+        raise HTTPException(status_code=403, detail="You are not enrolled in this course.")
+
+    # 2. Check Course Existence
+    course = db.query(CourseModel).filter(CourseModel.id == course_id).first()
+    if not course:
+        raise HTTPException(status_code=404, detail="Course not found")
+
+    # 3. Check Completion (All videos watched?)
+    total_videos = db.query(VideoModel).filter(VideoModel.course_id == course_id).count()
+    
+    if total_videos == 0:
+        raise HTTPException(status_code=400, detail="This course has no content yet.")
+
+    watched_videos = db.query(VideoProgressModel).filter(
+        VideoProgressModel.user_id == current_user.id,
+        VideoProgressModel.course_id == course_id,
+        VideoProgressModel.watched == True
+    ).all()
+
+    if len(watched_videos) < total_videos:
+        raise HTTPException(
+            status_code=403, 
+            detail=f"You have watched {len(watched_videos)}/{total_videos} videos. Complete all videos to get the certificate."
+        )
+
+    # 4. Get Completion Date (The date of the last watched video)
+    # Sort by watch_date descending to get the latest one
+    last_watched = sorted(watched_videos, key=lambda x: x.watch_date, reverse=True)[0]
+    completion_date = last_watched.watch_date
+
+    # 5. Get Instructor Name
+    instructor = db.query(UserModel).filter(UserModel.id == course.instructor_id).first()
+    instructor_name = f"{instructor.first_name} {instructor.last_name}" if instructor else "Unknown Instructor"
+
+    return {
+        "student_name": f"{current_user.first_name} {current_user.last_name}",
+        "course_name": course.title,
+        "instructor_name": instructor_name,
+        "completion_date": completion_date
     }

@@ -94,3 +94,11 @@ class EnrolledCourseResponse(BaseModel):
     
     class Config:
         orm_mode = True
+
+
+
+class CertificateResponse(BaseModel):
+    student_name: str
+    course_name: str
+    instructor_name: str
+    completion_date: datetime

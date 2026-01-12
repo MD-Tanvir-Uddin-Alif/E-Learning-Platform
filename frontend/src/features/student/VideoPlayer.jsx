@@ -135,6 +135,7 @@ export default function VideoPlayer() {
     );
   }
 
+
   const videos = courseData.videos || [];
   const currentVideo = videos[currentVideoIndex];
   const totalVideos = videos.length;
@@ -148,6 +149,9 @@ export default function VideoPlayer() {
   // But safest is simply checking if it's the last video AND it's being marked complete.
   const isLastVideo = currentVideoIndex === videos.length - 1;
   const isCourseCompleted = isLastVideo && (hasMarkedComplete || watchedVideos.has(currentVideo?.id));
+
+  // console.log(isCourseCompleted);
+
 
   const isVideoUnlocked = (index) => {
     if (index === 0) return true;
@@ -215,7 +219,17 @@ export default function VideoPlayer() {
         </div>
 
         <div className="flex gap-3 items-center">
-          <button
+          {isCourseCompleted && (
+            <button
+              onClick={() => navigate(`/certificate/${courseId}`)}
+              className="h-10 px-4 flex items-center gap-2 rounded-lg font-bold hover:bg-opacity-90 transition animate-in fade-in"
+              style={{ backgroundColor: '#222222', color: '#ffffff' }}
+            >
+              <span className="material-symbols-outlined" style={{ fontSize: 18 }}>workspace_premium</span>
+              <span className="text-sm">Get Certificate</span>
+            </button>
+          )}
+          {/* <button
             onClick={() => navigate('/profile')}
             className="h-10 px-4 flex items-center gap-2 rounded-lg text-white font-bold hover:bg-opacity-90 transition"
             style={{ backgroundColor: '#ff6d1f' }}
@@ -224,7 +238,7 @@ export default function VideoPlayer() {
               <span className="material-symbols-outlined" style={{ fontSize: 16 }}>person</span>
             </div>
             <span className="text-sm">My Profile</span>
-          </button>
+          </button> */}
         </div>
       </header>
 
