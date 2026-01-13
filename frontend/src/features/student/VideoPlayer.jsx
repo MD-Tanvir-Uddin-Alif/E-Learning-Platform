@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { getEnrolledCourseDetails, updateVideoProgress, getCourseProgress } from '../../api/axios'; // Ensure path matches your project
+import { getEnrolledCourseDetails, updateVideoProgress, getCourseProgress, submitCourseRating } from '../../api/axios';
 
 // Base URL for video assets
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000';
@@ -22,7 +22,14 @@ export default function VideoPlayer() {
   const [currentVideoIndex, setCurrentVideoIndex] = useState(0);
   const [watchedVideos, setWatchedVideos] = useState(new Set());
   const [showCompletionModal, setShowCompletionModal] = useState(false);
-  const [hasMarkedComplete, setHasMarkedComplete] = useState(false); // Prevents multiple API calls for same video
+  const [hasMarkedComplete, setHasMarkedComplete] = useState(false);
+  
+  // Rating Modal States
+  const [showRatingModal, setShowRatingModal] = useState(false);
+  const [rating, setRating] = useState(0);
+  const [hoverRating, setHoverRating] = useState(0);
+  const [comment, setComment] = useState('');
+  const [hasRated, setHasRated] = useState(false);
 
   // 1. Fetch course details with videos
   const { data: courseData, isLoading: isLoadingCourse, isError } = useQuery({
@@ -46,16 +53,29 @@ export default function VideoPlayer() {
         const newSet = new Set([...prev, videoId]);
         return newSet;
       });
-      // Invalidate queries to refresh progress bars/locks
       queryClient.invalidateQueries(['course-progress', courseId]);
       queryClient.invalidateQueries(['my-enrollments']);
     },
   });
 
-  // 4. Initialize State from API Data
+  // 4. Mutation to submit rating
+  const submitRatingMutation = useMutation({
+    mutationFn: (data) => submitCourseRating(courseId, data),
+    onSuccess: () => {
+      setHasRated(true);
+      setShowRatingModal(false);
+      // Show success message (you can replace alert with toast)
+      alert('Thank you for your rating!');
+    },
+    onError: (error) => {
+      const errorMsg = error.response?.data?.detail || 'Failed to submit rating';
+      alert(errorMsg);
+    }
+  });
+
+  // 5. Initialize State from API Data
   useEffect(() => {
     if (progressData?.videos && courseData?.videos) {
-      // Build set of watched IDs
       const watched = new Set(
         progressData.videos
           .filter(v => v.watched)
@@ -63,8 +83,6 @@ export default function VideoPlayer() {
       );
       setWatchedVideos(watched);
 
-      // Auto-jump to first unwatched video if just loading
-      // (Optional logic: can be removed if you want to always start at 0)
       if (currentVideoIndex === 0 && watched.size > 0 && watched.size < courseData.videos.length) {
          const firstUnwatchedIndex = courseData.videos.findIndex(
            video => !watched.has(video.id)
@@ -81,7 +99,7 @@ export default function VideoPlayer() {
     setHasMarkedComplete(false);
   }, [currentVideoIndex]);
 
-  // 5. Track video progress (The 90% Rule)
+  // 6. Track video progress (The 90% Rule)
   useEffect(() => {
     const video = videoRef.current;
     const videos = courseData?.videos || [];
@@ -93,11 +111,10 @@ export default function VideoPlayer() {
       if (video.duration > 0) {
         const watchedPercentage = (video.currentTime / video.duration) * 100;
         
-        // Mark as complete if > 90%, not already watched, and not already submitting
         if (watchedPercentage >= 90 && !watchedVideos.has(currentVideo.id) && !hasMarkedComplete) {
           setHasMarkedComplete(true);
           markWatchedMutation.mutate(currentVideo.id);
-          setShowCompletionModal(true); // This triggers the modal
+          setShowCompletionModal(true);
         }
       }
     };
@@ -106,6 +123,19 @@ export default function VideoPlayer() {
     return () => video.removeEventListener('timeupdate', handleTimeUpdate);
   }, [currentVideoIndex, courseData, watchedVideos, hasMarkedComplete, markWatchedMutation]);
 
+  // 7. Auto-show Rating Modal when progress reaches 100% (only once)
+  useEffect(() => {
+    const progressPercentage = progressData ? progressData.completion_percentage : 0;
+    
+    if (Math.round(progressPercentage) === 100 && !hasRated && !showRatingModal) {
+      // Show rating modal automatically when course is 100% complete
+      const timer = setTimeout(() => {
+        setShowRatingModal(true);
+      }, 1000); // Small delay for better UX
+      
+      return () => clearTimeout(timer);
+    }
+  }, [progressData, hasRated, showRatingModal]);
 
   if (isLoadingCourse || isLoadingProgress) {
     return (
@@ -124,7 +154,7 @@ export default function VideoPlayer() {
         <div className="text-center">
           <p className="text-red-500 mb-4">Failed to load course content.</p>
           <button
-            onClick={() => navigate('/student/course')} // Or student dashboard
+            onClick={() => navigate('/student/course')}
             className="px-6 py-2 rounded-lg font-bold"
             style={{ backgroundColor: '#ff6d1f', color: '#ffffff' }}
           >
@@ -135,23 +165,12 @@ export default function VideoPlayer() {
     );
   }
 
-
   const videos = courseData.videos || [];
   const currentVideo = videos[currentVideoIndex];
   const totalVideos = videos.length;
-  // Calculate percentage from API data if available, else local
   const progressPercentage = progressData ? progressData.completion_percentage : 0;
-
-  // Check if course is fully completed (all videos watched)
-  // We assume success of current video mutation makes watchedVideos size increase by 1
-  // If user just finished the last video, watchedVideos might not be updated in render yet,
-  // so we check if (watchedVideos.size + (hasMarkedComplete ? 1 : 0)) >= totalVideos
-  // But safest is simply checking if it's the last video AND it's being marked complete.
   const isLastVideo = currentVideoIndex === videos.length - 1;
   const isCourseCompleted = isLastVideo && (hasMarkedComplete || watchedVideos.has(currentVideo?.id));
-
-  // console.log(isCourseCompleted);
-
 
   const isVideoUnlocked = (index) => {
     if (index === 0) return true;
@@ -178,7 +197,31 @@ export default function VideoPlayer() {
     }
   };
 
-  // console.log("isCourseCompleted", isCourseCompleted)
+  const handleCompletionNext = () => {
+    if (isCourseCompleted && !hasRated) {
+      setShowCompletionModal(false);
+      setShowRatingModal(true);
+    } else {
+      handleNextVideo();
+    }
+  };
+
+  const handleSubmitRating = () => {
+    if (rating === 0) {
+      alert('Please select a rating');
+      return;
+    }
+
+    submitRatingMutation.mutate({
+      rating,
+      comment: comment.trim()
+    });
+  };
+
+  const handleSkipRating = () => {
+    setShowRatingModal(false);
+    setHasRated(true); // Mark as rated so modal doesn't show again
+  };
 
   return (
     <div className="h-screen flex flex-col overflow-hidden">
@@ -191,7 +234,7 @@ export default function VideoPlayer() {
       >
         <div className="flex items-center gap-4" style={{ color: '#222222' }}>
           <button
-            onClick={() => navigate('/student/course')} // Adjust route as needed
+            onClick={() => navigate('/student/course')}
             className="size-8 rounded-lg flex items-center justify-center hover:bg-[#F5E7C7] transition"
           >
             <span className="material-symbols-outlined" style={{ fontSize: 20 }}>arrow_back</span>
@@ -221,26 +264,30 @@ export default function VideoPlayer() {
         </div>
 
         <div className="flex gap-3 items-center">
-          {Math.round(progressPercentage) ==100 && (
-            <button
-              onClick={() => navigate(`/certificate/${courseId}`)}
-              className="h-10 px-4 flex items-center gap-2 rounded-lg font-bold hover:bg-opacity-90 transition animate-in fade-in"
-              style={{ backgroundColor: '#222222', color: '#ffffff' }}
-            >
-              <span className="material-symbols-outlined" style={{ fontSize: 18 }}>workspace_premium</span>
-              <span className="text-sm">Get Certificate</span>
-            </button>
+          {Math.round(progressPercentage) === 100 && (
+            <>
+              <button
+                onClick={() => navigate(`/certificate/${courseId}`)}
+                className="h-10 px-4 flex items-center gap-2 rounded-lg font-bold hover:bg-opacity-90 transition animate-in fade-in"
+                style={{ backgroundColor: '#222222', color: '#ffffff' }}
+              >
+                <span className="material-symbols-outlined" style={{ fontSize: 18 }}>workspace_premium</span>
+                <span className="text-sm">Get Certificate</span>
+              </button>
+              
+              {/* Manual Rating Button (if user skipped it) */}
+              {!hasRated && (
+                <button
+                  onClick={() => setShowRatingModal(true)}
+                  className="h-10 px-4 flex items-center gap-2 rounded-lg font-bold hover:bg-opacity-90 transition"
+                  style={{ backgroundColor: '#ff6d1f', color: '#ffffff' }}
+                >
+                  <span className="material-symbols-outlined" style={{ fontSize: 18 }}>star</span>
+                  <span className="text-sm">Rate Course</span>
+                </button>
+              )}
+            </>
           )}
-          {/* <button
-            onClick={() => navigate('/profile')}
-            className="h-10 px-4 flex items-center gap-2 rounded-lg text-white font-bold hover:bg-opacity-90 transition"
-            style={{ backgroundColor: '#ff6d1f' }}
-          >
-            <div className="size-6 rounded-full flex items-center justify-center" style={{ backgroundColor: 'rgba(255,255,255,.2)' }}>
-              <span className="material-symbols-outlined" style={{ fontSize: 16 }}>person</span>
-            </div>
-            <span className="text-sm">My Profile</span>
-          </button> */}
         </div>
       </header>
 
@@ -257,10 +304,10 @@ export default function VideoPlayer() {
               {currentVideo ? (
                 <video
                   ref={videoRef}
-                  key={currentVideo.id} // Ensures player resets on video change
+                  key={currentVideo.id}
                   className="w-full h-full"
                   controls
-                  autoPlay={false} // Autoplay often blocked by browsers, safer false or muted
+                  autoPlay={false}
                   src={getMediaUrl(currentVideo.video_url)}
                 >
                   Your browser does not support the video tag.
@@ -297,7 +344,6 @@ export default function VideoPlayer() {
                   </button>
                   <button
                     onClick={handleNextVideo}
-                    // Next button disabled if it's the last video OR next video is locked
                     disabled={currentVideoIndex === videos.length - 1 || !isVideoUnlocked(currentVideoIndex + 1)}
                     className="flex items-center justify-center gap-2 h-10 rounded-lg font-semibold text-sm hover:bg-[#e0d2b4] transition disabled:opacity-50 disabled:cursor-not-allowed"
                     style={{ backgroundColor: '#F5E7C7', color: '#222222' }}
@@ -413,11 +459,11 @@ export default function VideoPlayer() {
                 </button>
               ) : (
                 <button
-                  onClick={() => navigate('/student/course')}
+                  onClick={handleCompletionNext}
                   className="w-full py-3 font-bold rounded-lg text-sm hover:scale-[1.02] transition shadow-lg"
                   style={{ backgroundColor: '#ff6d1f', color: '#ffffff', boxShadow: '0 10px 15px -3px rgba(255,109,31,.2)' }}
                 >
-                  Back to My Courses
+                  {hasRated ? 'Back to My Courses' : 'Rate This Course'}
                 </button>
               )}
               <button
@@ -427,6 +473,132 @@ export default function VideoPlayer() {
               >
                 Stay Here
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ----------  RATING MODAL  ---------- */}
+      {showRatingModal && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-sm"
+          style={{ backgroundColor: 'rgba(0,0,0,.6)' }}
+          onClick={(e) => {
+            if (e.target === e.currentTarget) {
+              setShowRatingModal(false);
+            }
+          }}
+        >
+          <div
+            className="p-8 rounded-2xl shadow-2xl max-w-md w-full mx-4 relative overflow-hidden border"
+            style={{ backgroundColor: '#FAF3E1', borderColor: '#F5E7C7' }}
+          >
+            {/* Background Decorations */}
+            <div className="absolute -top-10 -left-10 w-40 h-40 rounded-full blur-3xl" style={{ backgroundColor: 'rgba(255,109,31,.08)' }} />
+            <div className="absolute -bottom-10 -right-10 w-40 h-40 rounded-full blur-3xl" style={{ backgroundColor: 'rgba(255,109,31,.08)' }} />
+            
+            <div className="relative">
+              {/* Header */}
+              <div className="text-center mb-6">
+                <div className="mx-auto size-16 rounded-full flex items-center justify-center mb-4" style={{ backgroundColor: 'rgba(255,109,31,.1)', color: '#ff6d1f' }}>
+                  <span className="material-symbols-outlined" style={{ fontSize: 32 }}>star</span>
+                </div>
+                <h2 className="text-2xl font-bold mb-2" style={{ color: '#222222' }}>
+                  Rate This Course
+                </h2>
+                <p className="text-sm" style={{ color: 'rgba(34,34,34,.6)' }}>
+                  Share your experience to help other learners
+                </p>
+              </div>
+
+              {/* Star Rating */}
+              <div className="mb-6">
+                <div className="flex justify-center gap-2 mb-2">
+                  {[1, 2, 3, 4, 5].map((star) => (
+                    <button
+                      key={star}
+                      type="button"
+                      onClick={() => setRating(star)}
+                      onMouseEnter={() => setHoverRating(star)}
+                      onMouseLeave={() => setHoverRating(0)}
+                      className="transition-transform hover:scale-110 focus:outline-none"
+                    >
+                      <span 
+                        className="material-symbols-outlined" 
+                        style={{ 
+                          fontSize: 40,
+                          color: (hoverRating || rating) >= star ? '#ff6d1f' : 'rgba(34,34,34,.2)',
+                          fontVariationSettings: (hoverRating || rating) >= star ? "'FILL' 1" : "'FILL' 0"
+                        }}
+                      >
+                        star
+                      </span>
+                    </button>
+                  ))}
+                </div>
+                <p className="text-center text-sm font-medium" style={{ color: '#222222' }}>
+                  {rating === 0 ? 'Select a rating' : 
+                   rating === 1 ? 'Poor' :
+                   rating === 2 ? 'Fair' :
+                   rating === 3 ? 'Good' :
+                   rating === 4 ? 'Very Good' :
+                   'Excellent'}
+                </p>
+              </div>
+
+              {/* Comment Textarea */}
+              <div className="mb-6">
+                <label className="block text-sm font-medium mb-2" style={{ color: '#222222' }}>
+                  Your Review (Optional)
+                </label>
+                <textarea
+                  value={comment}
+                  onChange={(e) => setComment(e.target.value)}
+                  placeholder="Share your thoughts about this course..."
+                  rows={4}
+                  className="w-full px-4 py-3 rounded-lg border resize-none focus:outline-none transition"
+                  style={{ 
+                    backgroundColor: '#ffffff', 
+                    borderColor: '#F5E7C7',
+                    color: '#222222'
+                  }}
+                  maxLength={500}
+                />
+                <p className="text-xs mt-1 text-right" style={{ color: 'rgba(34,34,34,.5)' }}>
+                  {comment.length}/500
+                </p>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex flex-col gap-3">
+                <button
+                  onClick={handleSubmitRating}
+                  disabled={submitRatingMutation.isLoading}
+                  className="w-full py-3 font-bold rounded-lg text-sm hover:scale-[1.02] transition shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
+                  style={{ 
+                    backgroundColor: '#ff6d1f', 
+                    color: '#ffffff', 
+                    boxShadow: '0 10px 15px -3px rgba(255,109,31,.2)' 
+                  }}
+                >
+                  {submitRatingMutation.isLoading ? (
+                    <span className="flex items-center justify-center gap-2">
+                      <div className="animate-spin size-4 border-2 border-white border-t-transparent rounded-full" />
+                      Submitting...
+                    </span>
+                  ) : (
+                    'Submit Rating'
+                  )}
+                </button>
+                <button
+                  onClick={handleSkipRating}
+                  disabled={submitRatingMutation.isLoading}
+                  className="w-full py-3 font-medium text-sm rounded-lg hover:bg-[#F5E7C7]/50 transition disabled:opacity-50"
+                  style={{ backgroundColor: 'transparent', color: '#222222' }}
+                >
+                  Skip for Now
+                </button>
+              </div>
             </div>
           </div>
         </div>

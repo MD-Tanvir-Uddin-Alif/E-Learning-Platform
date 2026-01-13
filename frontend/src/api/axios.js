@@ -138,6 +138,12 @@ export const getCourseCertificate = (courseId) =>
   api.get(`/user/courses/${courseId}/certificate`).then((r) => r.data);
 
 
+// Submit Course Rating
+export const submitCourseRating = (courseId, data) => 
+  api.post(`/payment/courses/${courseId}/rate`, data).then((r) => r.data);
+
+
+
 
 // Interceptor Logic
 const authInterceptor = (config) => {
