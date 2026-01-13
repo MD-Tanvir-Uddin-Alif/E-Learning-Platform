@@ -30,6 +30,15 @@ export default function VideoPlayer() {
   const [hoverRating, setHoverRating] = useState(0);
   const [comment, setComment] = useState('');
   const [hasRated, setHasRated] = useState(false);
+  
+  // Toast State
+  const [toast, setToast] = useState(null);
+
+  // Toast Helper Functions
+  const showToast = (type, title, message) => {
+    setToast({ type, title, message });
+    setTimeout(() => setToast(null), 4000);
+  };
 
   // 1. Fetch course details with videos
   const { data: courseData, isLoading: isLoadingCourse, isError } = useQuery({
@@ -64,12 +73,11 @@ export default function VideoPlayer() {
     onSuccess: () => {
       setHasRated(true);
       setShowRatingModal(false);
-      // Show success message (you can replace alert with toast)
-      alert('Thank you for your rating!');
+      showToast('success', 'Thank You!', 'Your review has been submitted successfully.');
     },
     onError: (error) => {
       const errorMsg = error.response?.data?.detail || 'Failed to submit rating';
-      alert(errorMsg);
+      showToast('error', 'Error', errorMsg);
     }
   });
 
@@ -136,6 +144,39 @@ export default function VideoPlayer() {
       return () => clearTimeout(timer);
     }
   }, [progressData, hasRated, showRatingModal]);
+
+  // Toast Render Function
+  const renderToast = () => {
+    if (!toast) return null;
+    const isError = toast.type === 'error';
+    
+    return (
+      <div className="fixed top-5 right-5 z-[70] animate-[slideDown_0.3s_ease-out]">
+        <div className="pointer-events-auto w-[320px] rounded-xl shadow-xl border p-4 flex gap-3" 
+             style={{ backgroundColor: '#F5E7C6', borderColor: '#ead7cd' }}>
+          <div className={`size-6 rounded-full flex items-center justify-center text-white ${isError ? 'bg-red-500' : 'bg-[#FF6D1F]'}`}>
+            <span className="material-symbols-outlined" style={{ fontSize: 16 }}>
+              {isError ? 'priority_high' : 'check'}
+            </span>
+          </div>
+          <div className="flex-1">
+            <h3 className="font-bold text-sm" style={{ color: '#222222' }}>
+              {toast.title}
+            </h3>
+            <p className="text-xs" style={{ color: 'rgba(34,34,34,0.8)' }}>
+              {toast.message}
+            </p>
+          </div>
+          <button 
+            onClick={() => setToast(null)}
+            className="text-gray-400 hover:text-gray-600"
+          >
+            <span className="material-symbols-outlined" style={{ fontSize: 18 }}>close</span>
+          </button>
+        </div>
+      </div>
+    );
+  };
 
   if (isLoadingCourse || isLoadingProgress) {
     return (
@@ -208,7 +249,7 @@ export default function VideoPlayer() {
 
   const handleSubmitRating = () => {
     if (rating === 0) {
-      alert('Please select a rating');
+      showToast('error', 'Missing Rating', 'Please select a star rating');
       return;
     }
 
@@ -226,6 +267,23 @@ export default function VideoPlayer() {
   return (
     <div className="h-screen flex flex-col overflow-hidden">
       <link href="https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600;700&family=Material+Symbols+Outlined:opsz,wght,FILL@20..48,100..700,0..1&display=swap" rel="stylesheet" />
+      
+      {/* Custom Styles */}
+      <style>{`
+        @keyframes slideDown {
+          from {
+            transform: translateY(-100%);
+            opacity: 0;
+          }
+          to {
+            transform: translateY(0);
+            opacity: 1;
+          }
+        }
+      `}</style>
+
+      {/* Toast Notification */}
+      {renderToast()}
       
       {/* ----------  TOP NAV  ---------- */}
       <header
