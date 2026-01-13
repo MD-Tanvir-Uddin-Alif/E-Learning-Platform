@@ -1,6 +1,40 @@
 import React from 'react'
 
+
+
+import { useQuery } from '@tanstack/react-query';
+import { useNavigate } from 'react-router-dom';
+import { getPublicCourses, getAllCategories } from '../api/axios';
+
+// Base URL for images
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000';
+
+const getImageUrl = (path) => {
+  if (!path) return null;
+  if (path.startsWith('http')) return path;
+  const cleanPath = path.startsWith('/') ? path.slice(1) : path;
+  return `${API_BASE_URL}/${cleanPath}`;
+};
+
+
 const Home = () => {
+
+
+
+  const navigate = useNavigate();
+
+  const { data: categories = [] } = useQuery({
+    queryKey: ['home-categories'],
+    queryFn: getAllCategories, 
+  });
+
+  const { data: coursesData, isLoading: isLoadingCourses } = useQuery({
+    queryKey: ['home-courses'],
+    queryFn: getPublicCourses,
+  });
+
+  const featuredCourses = coursesData?.courses?.slice(0, 7) || [];
+  const featuredCategories = categories.slice(0, 4);
   return (
     <main>
       {/* Hero Section */}
@@ -111,249 +145,121 @@ const Home = () => {
 
         <div className="mb-12 flex flex-wrap justify-center gap-3">
           <button className="rounded-full bg-[#FF6D1F] px-6 py-2.5 text-sm font-semibold text-white shadow-md transition-all hover:bg-[#FF6D1F]/90">All Courses</button>
-          <button className="rounded-full bg-[#F5E7C6] px-6 py-2.5 text-sm font-semibold text-[#222222] transition-all hover:bg-[#FF6D1F] hover:text-white">Development</button>
-          <button className="rounded-full bg-[#F5E7C6] px-6 py-2.5 text-sm font-semibold text-[#222222] transition-all hover:bg-[#FF6D1F] hover:text-white">Design</button>
-          <button className="rounded-full bg-[#F5E7C6] px-6 py-2.5 text-sm font-semibold text-[#222222] transition-all hover:bg-[#FF6D1F] hover:text-white">Business</button>
-          <button className="rounded-full bg-[#F5E7C6] px-6 py-2.5 text-sm font-semibold text-[#222222] transition-all hover:bg-[#FF6D1F] hover:text-white">Marketing</button>
-          <button className="rounded-full bg-[#F5E7C6] px-6 py-2.5 text-sm font-semibold text-[#222222] transition-all hover:bg-[#FF6D1F] hover:text-white">Photography</button>
+          {featuredCategories.length > 0 ? (
+            <div className="flex flex-wrap gap-4 justify-center">
+              {featuredCategories.map((cat) => (
+                <button
+                  key={cat.id}
+                  className="rounded-full bg-[#F5E7C6] px-6 py-2.5 text-sm font-semibold text-[#222222] transition-all hover:bg-[#FF6D1F] hover:text-white"
+                >
+                  {cat.name}
+                </button>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-8 text-[#222222]/40">
+              Loading categories...
+            </div>
+          )}
+
         </div>
 
         <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-          {/* Course Card 1 */}
-          <div className="group relative flex flex-col overflow-hidden rounded-2xl bg-[#FAF3E1] border border-transparent shadow-sm transition-all duration-300 hover:-translate-y-1 hover:border-[#FF6D1F]/30 hover:shadow-lg hover:shadow-[#FF6D1F]/10">
-            <div className="relative aspect-video w-full overflow-hidden bg-gray-200">
-              <img src="https://lh3.googleusercontent.com/aida-public/AB6AXuD7lwfetIVcrtDNkI8uBzv8hfC-XFfyPYVSPazlfD4L9RPwCSf4M99TFk5RcCug138lU5ZPn7yYioXVr37NfhE4H6kItCY6FH_gS5QQcygMrNFjCSBmkIVr-A2wqkFxXmiv3CUNNwMqAKclkKCgJNTHgJw9FTQlkLW3fVin_8j7PF_N8tGRHrkDtElAm6D6_AAtKs4x2X7TfNpFgpa0zaPj0lW6hhP4ccoqifl_v2N32FlEFFUS-OGt2Yplobd5yaSPuOMSX6yfR1g" alt="Course" className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105" />
-              <div className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 transition-opacity duration-300 group-hover:opacity-100">
-                <button className="rounded-full bg-[#FF6D1F] px-6 py-2 text-sm font-bold text-white shadow-lg transform translate-y-4 group-hover:translate-y-0 transition-all duration-300">Start Learning</button>
-              </div>
+          {isLoadingCourses ? (
+            <div className="col-span-full py-20 text-center text-[#222222]/50">
+              Loading courses...
             </div>
-            <div className="flex flex-1 flex-col p-5">
-              <div className="flex items-center justify-between">
-                <span className="rounded bg-white px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-[#FF6D1F] shadow-sm">Development</span>
-                <div className="flex items-center gap-1 text-amber-500">
-                  <span className="material-symbols-outlined text-[16px] fill-current">star</span>
-                  <span className="text-xs font-bold">4.8</span>
-                  <span className="text-[10px] text-[#222222]/50">(1.2k)</span>
-                </div>
-              </div>
-              <h3 className="mt-3 text-lg font-bold leading-tight group-hover:text-[#FF6D1F] transition-colors">Complete Python Bootcamp: From Zero to Hero</h3>
-              <div className="mt-4 flex items-center gap-2">
-                <img src="https://lh3.googleusercontent.com/aida-public/AB6AXuD4J1ubXCuGsBm-7ZewMVx84OlyNmoOJDLovy8elku27w_STPp8QhaUgmBnraw5_OxTylXjEywEAMW-V2yrF18cqXKRuyPyJDUEFNzC5s6F7I8gIwTe3UZnuD9TPEyT1JJEcau5lpjjN12nDYnF4rQGB-bCwzi0om-uCTjlTIi1YM8RCD5bpKAMOVoToiS5T738ZN8zTsfA5HzMPId2XI9UfOEQMhNO1ZlpiVjayfTAz48KC21vNQCa0CpWPwPC4VAbtZ7VvN41308" alt="Instructor" className="h-6 w-6 rounded-full" />
-                <span className="text-xs font-medium text-[#222222]/70">Jose Portilla</span>
-              </div>
-              <div className="mt-auto flex items-center justify-between pt-4 border-t border-[#222222]/5">
-                <span className="text-lg font-bold">$19.99</span>
-                <span className="text-xs font-medium text-[#222222]/50 line-through">$84.99</span>
-              </div>
-            </div>
-          </div>
+          ) : featuredCourses.length > 0 ? (
+            featuredCourses.map((course) => (
+              <div
+                key={course.id}
+                onClick={() => navigate(`/courses/${course.id}`)}
+                className="group relative flex cursor-pointer flex-col overflow-hidden rounded-2xl bg-[#FAF3E1] border border-transparent shadow-sm transition-all duration-300 hover:-translate-y-1 hover:border-[#FF6D1F]/30 hover:shadow-lg hover:shadow-[#FF6D1F]/10"
+              >
+                {/* Thumbnail */}
+                <div className="relative aspect-video w-full overflow-hidden bg-gray-200">
+                  {course.image_url ? (
+                    <img
+                      src={getImageUrl(course.image_url)}
+                      alt={course.title}
+                      className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                    />
+                  ) : (
+                    <div className="flex h-full w-full items-center justify-center text-gray-400">
+                      <span className="material-symbols-outlined text-[48px]">image</span>
+                    </div>
+                  )}
 
-          {/* Course Card 2 */}
-          <div className="group relative flex flex-col overflow-hidden rounded-2xl bg-[#FAF3E1] border border-transparent shadow-sm transition-all duration-300 hover:-translate-y-1 hover:border-[#FF6D1F]/30 hover:shadow-lg hover:shadow-[#FF6D1F]/10">
-            <div className="relative aspect-video w-full overflow-hidden bg-gray-200">
-              <img src="https://lh3.googleusercontent.com/aida-public/AB6AXuCsKmecf68D8wkxwXKTz5VFqNSRezaKjJn_gvAzMI0b-CClLTY3Dp-AIp0utDejAddYS4DqJz1GX4EM2fQ-mnuvrg-7Ov4hfP1JrtgAc1ZSRYjPezWDgMMo1Q5kcdW4pBq6UE2ucoqHJywnlDHajEjWyI8Z1KF-LIX3jvLSNdkdY0fpmGD06Zsig8UY2Gntj0VXSrmZK3pEDp956xVyq4MYWxtTv9OwTTYOpG605pGyLxtrvCXd2A_3eE2iOW_EN3YEtDPi7UOn54Y" alt="Course" className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105" />
-              <div className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 transition-opacity duration-300 group-hover:opacity-100">
-                <button className="rounded-full bg-[#FF6D1F] px-6 py-2 text-sm font-bold text-white shadow-lg transform translate-y-4 group-hover:translate-y-0 transition-all duration-300">Start Learning</button>
-              </div>
-            </div>
-            <div className="flex flex-1 flex-col p-5">
-              <div className="flex items-center justify-between">
-                <span className="rounded bg-white px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-[#FF6D1F] shadow-sm">Design</span>
-                <div className="flex items-center gap-1 text-amber-500">
-                  <span className="material-symbols-outlined text-[16px] fill-current">star</span>
-                  <span className="text-xs font-bold">4.9</span>
-                  <span className="text-[10px] text-[#222222]/50">(850)</span>
+                  {/* Hover Overlay */}
+                  <div className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 transition-opacity duration-300 group-hover:opacity-100">
+                    <button className="rounded-full bg-[#FF6D1F] px-6 py-2 text-sm font-bold text-white shadow-lg transform translate-y-4 group-hover:translate-y-0 transition-all duration-300">
+                      Start Learning
+                    </button>
+                  </div>
                 </div>
-              </div>
-              <h3 className="mt-3 text-lg font-bold leading-tight group-hover:text-[#FF6D1F] transition-colors">UI/UX Design Masterclass: Adobe XD & Figma</h3>
-              <div className="mt-4 flex items-center gap-2">
-                <img src="https://lh3.googleusercontent.com/aida-public/AB6AXuDJmZVii2rtDemSflr5tM3lmaJKSYP1ij-62V6BEQ7zxHrQrRRjsO66Pw6TTABW6skzTbc7zb07nL4MoWVOL_a-EeraqptYIvdVyj2h4ZgpXz3SGYvRm1vgPjghDmv3kQmn9Rd4uazp2QtERLaWXHL-BjI_I-3Gp9hg7MuQp4SK01OlmSGtG0jV3DHKzuyargNV82v0UQj2A2nGPvEavSkTZ9PrvSiim7j1nH4K0y400IhCVWdQCK2Q5kdlp9CUtBNwhbN7mp6jU7A" alt="Instructor" className="h-6 w-6 rounded-full" />
-                <span className="text-xs font-medium text-[#222222]/70">Andrei Neagoie</span>
-              </div>
-              <div className="mt-auto flex items-center justify-between pt-4 border-t border-[#222222]/5">
-                <span className="text-lg font-bold">$24.99</span>
-                <span className="text-xs font-medium text-[#222222]/50 line-through">$99.99</span>
-              </div>
-            </div>
-          </div>
 
-          {/* Course Card 3 */}
-          <div className="group relative flex flex-col overflow-hidden rounded-2xl bg-[#FAF3E1] border border-transparent shadow-sm transition-all duration-300 hover:-translate-y-1 hover:border-[#FF6D1F]/30 hover:shadow-lg hover:shadow-[#FF6D1F]/10">
-            <div className="relative aspect-video w-full overflow-hidden bg-gray-200">
-              <img src="https://lh3.googleusercontent.com/aida-public/AB6AXuAxD1Qtcvvsxx_sbFNpJOdgvZtTOQ-Pa44gwDyzsO9NOO8QPoCOb7iXr5DpARLXPsQrIgPLShW_NPgJaph-LwdszKdk4lfGJZd7hTKIyevWKcmPii3PtF5STVjKButed8W1rQAGjUgQoOyzj37DK-OmICeWPrrrYMDBj7Hb2EjOwFle2jCEFPHhMF7a2RyQVDvCb1ZiCQtJdgXuR3e3zu6vvVoH2G-3gKMu9KxI_SjqTnOIm8NKIptqAYrdnQafCGAArJBol7Pnhbo" alt="Course" className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105" />
-              <div className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 transition-opacity duration-300 group-hover:opacity-100">
-                <button className="rounded-full bg-[#FF6D1F] px-6 py-2 text-sm font-bold text-white shadow-lg transform translate-y-4 group-hover:translate-y-0 transition-all duration-300">Start Learning</button>
-              </div>
-            </div>
-            <div className="flex flex-1 flex-col p-5">
-              <div className="flex items-center justify-between">
-                <span className="rounded bg-white px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-[#FF6D1F] shadow-sm">Business</span>
-                <div className="flex items-center gap-1 text-amber-500">
-                  <span className="material-symbols-outlined text-[16px] fill-current">star</span>
-                  <span className="text-xs font-bold">4.7</span>
-                  <span className="text-[10px] text-[#222222]/50">(2.4k)</span>
-                </div>
-              </div>
-              <h3 className="mt-3 text-lg font-bold leading-tight group-hover:text-[#FF6D1F] transition-colors">MBA in a Box: Business Lessons from a CEO</h3>
-              <div className="mt-4 flex items-center gap-2">
-                <img src="https://lh3.googleusercontent.com/aida-public/AB6AXuCNrlYo6cc5syRRULgfzy-TO-ZW4zjMPbvh0kttCYoLE8-zkcwIbY1FG3Anf7YOymHuTnzQtP8Gwa791emg7-n5nnz1xvYy-oIKWA5Hdu-DdTVj9mShwKTNAfikQzlW7_HhZcWdm2As22d0fdgBijtTj_rwp46n5cpLn-56FV_BuNH1ixNJjlKtlOG4hkPK8ecpooepeGBMSB_YChfuf29jCAWLw3X730ZpCLyNNRo9BgOmH1Ji9gXRmFQB2GqwyKWfR_YIWOd48J4" alt="Instructor" className="h-6 w-6 rounded-full" />
-                <span className="text-xs font-medium text-[#222222]/70">Chris Haroun</span>
-              </div>
-              <div className="mt-auto flex items-center justify-between pt-4 border-t border-[#222222]/5">
-                <span className="text-lg font-bold">$14.99</span>
-                <span className="text-xs font-medium text-[#222222]/50 line-through">$49.99</span>
-              </div>
-            </div>
-          </div>
+                {/* Content */}
+                <div className="flex flex-1 flex-col p-5">
+                  <div className="flex items-center justify-between">
+                    <span className="rounded bg-white px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-[#FF6D1F] shadow-sm">
+                      {course.category}
+                    </span>
 
-          {/* Course Card 4 */}
-          <div className="group relative flex flex-col overflow-hidden rounded-2xl bg-[#FAF3E1] border border-transparent shadow-sm transition-all duration-300 hover:-translate-y-1 hover:border-[#FF6D1F]/30 hover:shadow-lg hover:shadow-[#FF6D1F]/10">
-            <div className="relative aspect-video w-full overflow-hidden bg-gray-200">
-              <img src="https://lh3.googleusercontent.com/aida-public/AB6AXuBX2ACBecgmqnCGlOQRTp_iTdxdoON_Um-Nwmlss7abjOBKiHXvgQns4JX-dUNIRhul6OPCXQA_CGIH2HF-ASpEzLM-xIK9ThH6N8Y3viqskIwBrfzgr94MhQ7fZ1UUAOgp1CWKZpRfFgSQtYaRSK8NhUHFNYCDvE2H5tIwgcXzcGa24-C0CTbMeE8ysjIk1T-ot5qmDYmfR9eO1rg_2JKcLkvllHI6QZBOj0dWg9_o4XrJIionESvAahFEHZ4ZFncVa5gkKlClBOU" alt="Course" className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105" />
-              <div className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 transition-opacity duration-300 group-hover:opacity-100">
-                <button className="rounded-full bg-[#FF6D1F] px-6 py-2 text-sm font-bold text-white shadow-lg transform translate-y-4 group-hover:translate-y-0 transition-all duration-300">Start Learning</button>
-              </div>
-            </div>
-            <div className="flex flex-1 flex-col p-5">
-              <div className="flex items-center justify-between">
-                <span className="rounded bg-white px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-[#FF6D1F] shadow-sm">Marketing</span>
-                <div className="flex items-center gap-1 text-amber-500">
-                  <span className="material-symbols-outlined text-[16px] fill-current">star</span>
-                  <span className="text-xs font-bold">4.6</span>
-                  <span className="text-[10px] text-[#222222]/50">(500)</span>
-                </div>
-              </div>
-              <h3 className="mt-3 text-lg font-bold leading-tight group-hover:text-[#FF6D1F] transition-colors">Digital Marketing Masterclass: 23 Courses in 1</h3>
-              <div className="mt-4 flex items-center gap-2">
-                <img src="https://lh3.googleusercontent.com/aida-public/AB6AXuBJre23LvVy6zJutejrnHRyzlpNj6QsckZ02djzRyAw4rfSEdGUmqWK56zUJTmeM14R7WWk7bzi2iPiCwihlOCETu54Orx3F1IMszafcgUvYBYuQBzbugh0sBbJ9PIQ5so9XmjpPOfNszecScw-eCPDiDvQDZK5qvS776dbV1JmLBLlM1aAnPmIZyV2WPFBcxWl8mFpNYjI642qrEqoCMrEKKxwBelwN0aMl38m6uKamdiBiO8_Wtegsn6R7fMNEsc_v3qkmPwsPZA" alt="Instructor" className="h-6 w-6 rounded-full" />
-                <span className="text-xs font-medium text-[#222222]/70">Phil Ebiner</span>
-              </div>
-              <div className="mt-auto flex items-center justify-between pt-4 border-t border-[#222222]/5">
-                <span className="text-lg font-bold">$18.99</span>
-                <span className="text-xs font-medium text-[#222222]/50 line-through">$79.99</span>
-              </div>
-            </div>
-          </div>
+                    <div className="flex items-center gap-1 text-amber-500">
+                      <span className="material-symbols-outlined text-[16px] fill-current">
+                        star
+                      </span>
+                      <span className="text-xs font-bold">
+                        {course.rating || 'New'}
+                      </span>
+                      <span className="text-[10px] text-[#222222]/50">
+                        ({course.total_ratings || 0})
+                      </span>
+                    </div>
+                  </div>
 
-          {/* Course Card 5 */}
-          <div className="group relative flex flex-col overflow-hidden rounded-2xl bg-[#FAF3E1] border border-transparent shadow-sm transition-all duration-300 hover:-translate-y-1 hover:border-[#FF6D1F]/30 hover:shadow-lg hover:shadow-[#FF6D1F]/10">
-            <div className="relative aspect-video w-full overflow-hidden bg-gray-200">
-              <img src="https://lh3.googleusercontent.com/aida-public/AB6AXuCrmnZdG0FH8WMiyuuclz50vGo7tbNjt8FaK8KVzOJVScD5lz_pFucUebi9ojmJEmAlCNwKZWQgZ04hpkQkyLK1I-whqNLRWIAxMCrLU1BdwQTQyre6ZyaRgE8QTE3NqC2Ez-HFyojfWkJUpv4kUHk3HOkbPcYqbDzgDkeZqvQByvlES9HsOPdnzxBVkTi58i63bTulpjs0F2RuK8R-blONV1ufJdj2CTB29omT5tAXwRq7qe5_2zGEoBVGpJeBD1_6KuY988tsM30" alt="Course" className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105" />
-              <div className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 transition-opacity duration-300 group-hover:opacity-100">
-                <button className="rounded-full bg-[#FF6D1F] px-6 py-2 text-sm font-bold text-white shadow-lg transform translate-y-4 group-hover:translate-y-0 transition-all duration-300">Start Learning</button>
-              </div>
-            </div>
-            <div className="flex flex-1 flex-col p-5">
-              <div className="flex items-center justify-between">
-                <span className="rounded bg-white px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-[#FF6D1F] shadow-sm">Audio</span>
-                <div className="flex items-center gap-1 text-amber-500">
-                  <span className="material-symbols-outlined text-[16px] fill-current">star</span>
-                  <span className="text-xs font-bold">4.9</span>
-                  <span className="text-[10px] text-[#222222]/50">(320)</span>
-                </div>
-              </div>
-              <h3 className="mt-3 text-lg font-bold leading-tight group-hover:text-[#FF6D1F] transition-colors">Music Production in Logic Pro X</h3>
-              <div className="mt-4 flex items-center gap-2">
-                <img src="https://lh3.googleusercontent.com/aida-public/AB6AXuCg0rDgT68EKnsgBOq-4DE7B1obXQuClw852U4lEXQaGtOLBwHFalhQzr2adXTenaDWGOHK6LvSM5q3AbM5UQ9Ozti196OzNQBOI6dPgAnE9-QQ_ceQx1bGPXEXMNarmu8lqMkawLaMg3XAJkI3ggiUi9bRAvs93omCGHLrbp6zIpLcZw_XDglP9aU-ZlEy9MDubgneTDtm69hm69AcuXlo5NVXBhVTAXkrM4OempCt0ztnYuP6w0TccP76x41Ft3zmIzQp5kQCHnM" alt="Instructor" className="h-6 w-6 rounded-full" />
-                <span className="text-xs font-medium text-[#222222]/70">Tomas George</span>
-              </div>
-              <div className="mt-auto flex items-center justify-between pt-4 border-t border-[#222222]/5">
-                <span className="text-lg font-bold">$22.99</span>
-                <span className="text-xs font-medium text-[#222222]/50 line-through">$89.99</span>
-              </div>
-            </div>
-          </div>
+                  <h3 className="mt-3 text-lg font-bold leading-tight text-[#222222] group-hover:text-[#FF6D1F] transition-colors line-clamp-2">
+                    {course.title}
+                  </h3>
 
-          {/* Course Card 6 */}
-          <div className="group relative flex flex-col overflow-hidden rounded-2xl bg-[#FAF3E1] border border-transparent shadow-sm transition-all duration-300 hover:-translate-y-1 hover:border-[#FF6D1F]/30 hover:shadow-lg hover:shadow-[#FF6D1F]/10">
-            <div className="relative aspect-video w-full overflow-hidden bg-gray-200">
-              <img src="https://lh3.googleusercontent.com/aida-public/AB6AXuCHRIPvw_r14vQjqANkQGYCMDHRflHeyrpbyi1WhtRMxO6IdrZpNRVT1E-IL0CIYTSEwbEseeOKHRse9Xlk1yz7W5cmK-BdYegs2CxNM0g3ux_z1Twidvahiff6FJOwekV76nTwfb46F3pbh7m_97DEt1cBcnpin5wzRlNVPblHAZxUJiU2d-JeRA68nGdV0L91Q6w34StRhYVVl2SFvgjoqC51jObjUrMymT46VUwSQ_2oltAeOrY7uEsWa3mWLDtH44pG4FrS90Y" alt="Course" className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105" />
-              <div className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 transition-opacity duration-300 group-hover:opacity-100">
-                <button className="rounded-full bg-[#FF6D1F] px-6 py-2 text-sm font-bold text-white shadow-lg transform translate-y-4 group-hover:translate-y-0 transition-all duration-300">Start Learning</button>
-              </div>
-            </div>
-            <div className="flex flex-1 flex-col p-5">
-              <div className="flex items-center justify-between">
-                <span className="rounded bg-white px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-[#FF6D1F] shadow-sm">Web Dev</span>
-                <div className="flex items-center gap-1 text-amber-500">
-                  <span className="material-symbols-outlined text-[16px] fill-current">star</span>
-                  <span className="text-xs font-bold">4.7</span>
-                  <span className="text-[10px] text-[#222222]/50">(900)</span>
-                </div>
-              </div>
-              <h3 className="mt-3 text-lg font-bold leading-tight group-hover:text-[#FF6D1F] transition-colors">The Web Developer Bootcamp 2024</h3>
-              <div className="mt-4 flex items-center gap-2">
-                <img src="https://lh3.googleusercontent.com/aida-public/AB6AXuDc3LiypYN7fGA3DjG2BJMKS4zZWHiWeEX5u3I8OnnCxTTARS6eXKLz1zfw_f92KyH-QHZBsvUllIjOMS8lymdubDJWSBpSeuM4Oop5x-bSpQ_jYJWCLiaWWb3znlUf4gNsbVF9_TpTz97_ugG7C0h2POOwk4ARgtY9J9i6hAdQ2RHprPLNcBoGe2q5mibqN-W-WxhBTmYHFytIB8J8i8IUCP5eL4usSkrk6usRsJ5543FCah5JfqjO1KAmSYv2ybhuxgTZDVHjGF0" alt="Instructor" className="h-6 w-6 rounded-full" />
-                <span className="text-xs font-medium text-[#222222]/70">Colt Steele</span>
-              </div>
-              <div className="mt-auto flex items-center justify-between pt-4 border-t border-[#222222]/5">
-                <span className="text-lg font-bold">$21.99</span>
-                <span className="text-xs font-medium text-[#222222]/50 line-through">$94.99</span>
-              </div>
-            </div>
-          </div>
+                  <div className="mt-4 flex items-center gap-2">
+                    <img
+                      src={
+                        getImageUrl(course.instructor_image) ||
+                        `https://ui-avatars.com/api/?name=${course.instructor_name}`
+                      }
+                      alt={course.instructor_name}
+                      className="h-6 w-6 rounded-full object-cover bg-gray-100"
+                    />
+                    <span className="text-xs font-medium text-[#222222]/70 truncate">
+                      {course.instructor_name}
+                    </span>
+                  </div>
 
-          {/* Course Card 7 */}
-          <div className="group relative flex flex-col overflow-hidden rounded-2xl bg-[#FAF3E1] border border-transparent shadow-sm transition-all duration-300 hover:-translate-y-1 hover:border-[#FF6D1F]/30 hover:shadow-lg hover:shadow-[#FF6D1F]/10">
-            <div className="relative aspect-video w-full overflow-hidden bg-gray-200">
-              <img src="https://lh3.googleusercontent.com/aida-public/AB6AXuCVcQfNOwpgw4S9fjAmG9bTmlHcWCtHXuqWqcZMyXDSJpM1xTkUwEbXlyz8mdxGBJHEDifwVhevwDc0WzmUlk_2227VEOjmGLatkBCAwLTKklXuzP5JDoRKuvQRwX8nElSISbBTNnzWv1RSQeRChwv0rlqVnXsrazP0g_ZE43o5PsPBckERcTiVSaPkkfi34oyy3X0W2c-EJh7uOQotlt4SIuwLZ35G3mwrAvytxYcSewnfj7g8gkkvqphhBzcSWZ0kjGsX3to-HWQ" alt="Course" className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105" />
-              <div className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 transition-opacity duration-300 group-hover:opacity-100">
-                <button className="rounded-full bg-[#FF6D1F] px-6 py-2 text-sm font-bold text-white shadow-lg transform translate-y-4 group-hover:translate-y-0 transition-all duration-300">Start Learning</button>
-              </div>
-            </div>
-            <div className="flex flex-1 flex-col p-5">
-              <div className="flex items-center justify-between">
-                <span className="rounded bg-white px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-[#FF6D1F] shadow-sm">Health</span>
-                <div className="flex items-center gap-1 text-amber-500">
-                  <span className="material-symbols-outlined text-[16px] fill-current">star</span>
-                  <span className="text-xs font-bold">4.8</span>
-                  <span className="text-[10px] text-[#222222]/50">(450)</span>
-                </div>
-              </div>
-              <h3 className="mt-3 text-lg font-bold leading-tight group-hover:text-[#FF6D1F] transition-colors">Nutrition and Health Coaching Certification</h3>
-              <div className="mt-4 flex items-center gap-2">
-                <img src="https://lh3.googleusercontent.com/aida-public/AB6AXuAXU97nyrSo8AbNLJkKwSXIObpq6KX52YDOR-6oL14Loh-R9YOv8RURh3DP1i4lv_baD0ehJ3A86plD5JHuCx-vpC-2j8rydhY-Cg3riA_WLLPwkTnQ2ic3WpdX4RLTj3U0IWOXMF3pSgPq0vMTzoji-8obRjDfK7lfOJMMfemJVOS8XKQFataA_fiy68RJoA0mgOppMxMpDBNXT743-sA4OGWD5pgDJSlU26s1atSTM-7qOBvGKFCjU1epfF43WBv6ZvnckmCidAw" alt="Instructor" className="h-6 w-6 rounded-full" />
-                <span className="text-xs font-medium text-[#222222]/70">Felix Harder</span>
-              </div>
-              <div className="mt-auto flex items-center justify-between pt-4 border-t border-[#222222]/5">
-                <span className="text-lg font-bold">$16.99</span>
-                <span className="text-xs font-medium text-[#222222]/50 line-through">$69.99</span>
-              </div>
-            </div>
-          </div>
+                  <div className="mt-auto flex items-center justify-between pt-4 border-t border-[#222222]/5">
+                    <span className="text-lg font-bold text-[#222222]">
+                      {course.is_paid ? `$${course.price}` : 'Free'}
+                    </span>
 
-          {/* Course Card 8 */}
-          <div className="group relative flex flex-col overflow-hidden rounded-2xl bg-[#FAF3E1] border border-transparent shadow-sm transition-all duration-300 hover:-translate-y-1 hover:border-[#FF6D1F]/30 hover:shadow-lg hover:shadow-[#FF6D1F]/10">
-            <div className="relative aspect-video w-full overflow-hidden bg-gray-200">
-              <img src="https://lh3.googleusercontent.com/aida-public/AB6AXuD4_3C1201a-jskL7nNOy-m_LV0v3zukjnX8GIgoBhOVoaY2pdgjE7Jup6iF3R6kQo4pY4RynDo2N2FnheawSPsZzF4tZD5Y9owIgQgXiFJoO_k7MSutgcJU46E5n-bnhx_uoqIge-wT9blZisJkHoCXyayQTSgEjTEQiIYroWNvNIez_nn2JJYh6mjshOqSb6lGZfHeeY6mnpb8FjZtCQWeciUkf2u5JC8eCrRYQcwHwTpsbW1PRUvutmSp914D4ZHhM4-BrAHtNs" alt="Course" className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105" />
-              <div className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 transition-opacity duration-300 group-hover:opacity-100">
-                <button className="rounded-full bg-[#FF6D1F] px-6 py-2 text-sm font-bold text-white shadow-lg transform translate-y-4 group-hover:translate-y-0 transition-all duration-300">Start Learning</button>
-              </div>
-            </div>
-            <div className="flex flex-1 flex-col p-5">
-              <div className="flex items-center justify-between">
-                <span className="rounded bg-white px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-[#FF6D1F] shadow-sm">Marketing</span>
-                <div className="flex items-center gap-1 text-amber-500">
-                  <span className="material-symbols-outlined text-[16px] fill-current">star</span>
-                  <span className="text-xs font-bold">4.5</span>
-                  <span className="text-[10px] text-[#222222]/50">(300)</span>
+                    {course.original_price && (
+                      <span className="text-xs font-medium text-[#222222]/50 line-through">
+                        ${course.original_price}
+                      </span>
+                    )}
+                  </div>
                 </div>
               </div>
-              <h3 className="mt-3 text-lg font-bold leading-tight group-hover:text-[#FF6D1F] transition-colors">Social Media Marketing Mastery 2024</h3>
-              <div className="mt-4 flex items-center gap-2">
-                <img src="https://lh3.googleusercontent.com/aida-public/AB6AXuA63DUQ4l3yNU5OCSrXEW-bVxMIdwykXtlQvq9-iXsqn4BGMDvZRH4QMllnkwNVawvbtiag_Ez-puihpQ70dqyX2WVGgsAzYQZYhAWIx4D_iKHoHET-I1mYwUxQJAYfH_ZL1-rT8JyC-e8EuSJZEZ8csLzo0wAiuPQo0GaEHnc0NbgsqlBvlUJIlKN8YbtM0mbijbd8-WuCrSepei3Qru7eyuTI8OmZX5944E7wP-94uicQFNSpPWSsv6HVPORufvWepYZZuKBn89Y" alt="Instructor" className="h-6 w-6 rounded-full" />
-                <span className="text-xs font-medium text-[#222222]/70">Coursenvy</span>
-              </div>
-              <div className="mt-auto flex items-center justify-between pt-4 border-t border-[#222222]/5">
-                <span className="text-lg font-bold">$25.99</span>
-                <span className="text-xs font-medium text-[#222222]/50 line-through">$99.99</span>
-              </div>
+            ))
+          ) : (
+            <div className="col-span-full py-10 text-center bg-white rounded-xl border border-dashed border-gray-200">
+              <p className="text-gray-400">No courses available yet.</p>
             </div>
-          </div>
+          )}
+
         </div>
 
         <div className="mt-16 flex justify-center">
-          <button className="flex items-center gap-2 rounded-full border-2 border-[#FF6D1F] bg-transparent px-8 py-3 text-sm font-bold text-[#FF6D1F] transition-all hover:bg-[#FF6D1F] hover:text-white">
+          <button onClick={()=> navigate('/courses')} className="flex items-center gap-2 rounded-full border-2 border-[#FF6D1F] bg-transparent px-8 py-3 text-sm font-bold text-[#FF6D1F] transition-all hover:bg-[#FF6D1F] hover:text-white">
             View All Courses
             <span className="material-symbols-outlined text-sm">arrow_forward</span>
           </button>
