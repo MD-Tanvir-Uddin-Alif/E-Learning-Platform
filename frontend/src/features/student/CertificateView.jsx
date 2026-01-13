@@ -29,10 +29,10 @@ export default function CertificateView() {
         <p className="text-red-500 font-bold text-lg">Unable to generate certificate.</p>
         <p className="text-[#222222]/60">{error?.response?.data?.detail || "You may not have completed the course yet."}</p>
         <button 
-          onClick={() => navigate('/dashboard')}
+          onClick={() => navigate('/student/course')}
           className="px-6 py-2 bg-[#FF6D1F] text-white rounded-lg font-bold hover:bg-[#e0560e] transition"
         >
-          Back to Dashboard
+          Back to Course
         </button>
       </div>
     );
@@ -53,13 +53,13 @@ export default function CertificateView() {
         
         {/* Actions Bar (No Print) */}
         <div className="bg-white border-b border-[#F5E7C6] px-8 py-4 flex justify-between items-center shadow-sm no-print">
-          <button 
-            onClick={() => navigate('/dashboard')}
+          {/* <button 
+            onClick={() => navigate(`/learn/:${courseId}`)}
             className="flex items-center gap-2 text-[#222222]/60 hover:text-[#FF6D1F] font-bold transition-colors"
           >
             <span className="material-symbols-outlined">arrow_back</span>
-            Back to Dashboard
-          </button>
+            Back to Course
+          </button> */}
           <button 
             onClick={handlePrint}
             className="flex items-center gap-2 bg-[#FF6D1F] text-white px-6 py-2.5 rounded-xl font-bold shadow-lg shadow-orange-500/20 hover:bg-[#e0560e] transition-all hover:-translate-y-0.5 active:translate-y-0"

@@ -178,6 +178,8 @@ export default function VideoPlayer() {
     }
   };
 
+  // console.log("isCourseCompleted", isCourseCompleted)
+
   return (
     <div className="h-screen flex flex-col overflow-hidden">
       <link href="https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600;700&family=Material+Symbols+Outlined:opsz,wght,FILL@20..48,100..700,0..1&display=swap" rel="stylesheet" />
@@ -219,7 +221,7 @@ export default function VideoPlayer() {
         </div>
 
         <div className="flex gap-3 items-center">
-          {isCourseCompleted && (
+          {Math.round(progressPercentage) ==100 && (
             <button
               onClick={() => navigate(`/certificate/${courseId}`)}
               className="h-10 px-4 flex items-center gap-2 rounded-lg font-bold hover:bg-opacity-90 transition animate-in fade-in"
