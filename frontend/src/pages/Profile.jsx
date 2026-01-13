@@ -319,10 +319,15 @@ const Profile = () => {
                   <span className="material-symbols-outlined text-xl text-[#FF6D1F]">person</span>
                   <p className="text-sm font-bold tracking-wide">Personal Info</p>
                 </a>
-                <a className="flex items-center gap-2 border-b-[3px] border-transparent text-[#222222]/60 hover:text-[#FF6D1F] transition-colors pb-3 px-1" href="#">
+                {/* <a className="flex items-center gap-2 border-b-[3px] border-transparent text-[#222222]/60 hover:text-[#FF6D1F] transition-colors pb-3 px-1" href="#">
                   <span className="material-symbols-outlined text-xl">menu_book</span>
                   <Link to="/student/course" className="text-sm font-medium tracking-wide">My Courses</Link>
-                </a>
+                </a> */}
+                {user?.role !== 'admin' &&(<Link to='/student/course' className="flex items-center gap-2 border-b-[3px] border-transparent text-[#222222]/60 hover:text-[#FF6D1F] transition-colors pb-3 px-1" href="#">
+                  <span className="material-symbols-outlined text-xl">menu_book</span>
+                  <p className="text-sm font-medium tracking-wide">My Course</p>
+                </Link>
+                )}
                 {user?.role !== 'user' &&(<Link to='/dashboard' className="flex items-center gap-2 border-b-[3px] border-transparent text-[#222222]/60 hover:text-[#FF6D1F] transition-colors pb-3 px-1" href="#">
                   <span className="material-symbols-outlined text-xl">dashboard</span>
                   <p className="text-sm font-medium tracking-wide">Dashboard</p>

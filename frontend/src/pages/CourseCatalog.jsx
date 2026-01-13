@@ -166,7 +166,7 @@ export default function CourseCatalog() {
               <span className="material-symbols-outlined text-[#FF6D1F]">school</span>
               <span className="text-[#222222] font-bold">E-Learning Platform</span>
             </div>
-            <p className="text-[#a08f85] text-sm">© 2024 SkillForge Inc. All rights reserved.</p>
+            <p className="text-[#a08f85] text-sm">© 2025 SkillForge Inc. All rights reserved.</p>
           </div>
         </footer>
       </div>
