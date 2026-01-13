@@ -1,13 +1,15 @@
-import React, { useRef } from 'react';
+import React, { useRef, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { getCourseCertificate } from '../../api/axios';
-import { useReactToPrint } from 'react-to-print';
+import html2canvas from 'html2canvas';
+import jsPDF from 'jspdf';
 
 export default function CertificateView() {
   const { courseId } = useParams();
   const navigate = useNavigate();
   const componentRef = useRef();
+  const [isDownloading, setIsDownloading] = useState(false);
 
   // Fetch Certificate Data
   const { data: cert, isLoading, isError, error } = useQuery({
@@ -16,10 +18,74 @@ export default function CertificateView() {
     enabled: !!courseId,
   });
 
-  const handlePrint = useReactToPrint({
-    content: () => componentRef.current,
-    documentTitle: `Certificate-${cert?.course_name || 'Course'}`,
-  });
+  const handleDownload = async () => {
+    if (isDownloading) return;
+    
+    try {
+      setIsDownloading(true);
+      const element = componentRef.current;
+      
+      if (!element) {
+        throw new Error('Certificate element not found');
+      }
+
+      // Wait for fonts to load
+      await document.fonts.ready;
+      await new Promise(resolve => setTimeout(resolve, 300));
+      
+      console.log('Starting PDF generation...');
+      
+      // Capture the certificate with html2canvas
+      const canvas = await html2canvas(element, {
+        scale: 3,
+        useCORS: false, // Changed to false
+        allowTaint: true, // Allow cross-origin images
+        logging: true, // Enable logging to see what's happening
+        backgroundColor: '#FAF3E1',
+        width: 1120,
+        height: 800,
+      });
+
+      console.log('Canvas created:', canvas.width, 'x', canvas.height);
+
+      // Convert canvas to image
+      const imgData = canvas.toDataURL('image/png', 1.0);
+      
+      if (!imgData || imgData === 'data:,') {
+        throw new Error('Failed to generate image from canvas');
+      }
+
+      console.log('Image data created');
+      
+      // Create PDF in landscape orientation
+      const pdf = new jsPDF({
+        orientation: 'landscape',
+        unit: 'mm',
+        format: 'a4'
+      });
+
+      // Calculate dimensions to fit A4 landscape (297mm x 210mm)
+      const pdfWidth = pdf.internal.pageSize.getWidth();
+      const pdfHeight = pdf.internal.pageSize.getHeight();
+      
+      console.log('PDF dimensions:', pdfWidth, 'x', pdfHeight);
+      
+      // Add image to PDF
+      pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight, undefined, 'FAST');
+      
+      // Download the PDF
+      const fileName = `Certificate-${cert?.course_name?.replace(/[^a-z0-9]/gi, '_') || 'Course'}.pdf`;
+      pdf.save(fileName);
+      
+      console.log('PDF saved successfully');
+      
+    } catch (err) {
+      console.error('Detailed error generating PDF:', err);
+      alert(`Failed to download certificate: ${err.message}`);
+    } finally {
+      setIsDownloading(false);
+    }
+  };
 
   if (isLoading) return <div className="min-h-screen flex items-center justify-center bg-[#FAF3E1] text-[#222222]/50 font-bold">Generating Certificate...</div>;
   
@@ -38,7 +104,7 @@ export default function CertificateView() {
     );
   }
 
-  // Generate Certificate ID if not from backend (mock for display)
+  // Generate Certificate ID if not from backend
   const certId = `SF-${courseId}-${new Date(cert.completion_date).getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`;
   const formattedDate = new Date(cert.completion_date).toLocaleDateString('en-US', {
     month: 'long', day: 'numeric', year: 'numeric'
@@ -51,28 +117,24 @@ export default function CertificateView() {
 
       <div className="bg-[#f8f6f5] min-h-screen flex flex-col font-['Lexend']">
         
-        {/* Actions Bar (No Print) */}
-        <div className="bg-white border-b border-[#F5E7C6] px-8 py-4 flex justify-between items-center shadow-sm no-print">
-          {/* <button 
-            onClick={() => navigate(`/learn/:${courseId}`)}
-            className="flex items-center gap-2 text-[#222222]/60 hover:text-[#FF6D1F] font-bold transition-colors"
-          >
-            <span className="material-symbols-outlined">arrow_back</span>
-            Back to Course
-          </button> */}
+        {/* Actions Bar */}
+        <div className="bg-white border-b border-[#F5E7C6] px-8 py-4 flex justify-between items-center shadow-sm">
           <button 
-            onClick={handlePrint}
-            className="flex items-center gap-2 bg-[#FF6D1F] text-white px-6 py-2.5 rounded-xl font-bold shadow-lg shadow-orange-500/20 hover:bg-[#e0560e] transition-all hover:-translate-y-0.5 active:translate-y-0"
+            onClick={handleDownload}
+            disabled={isDownloading}
+            className="flex items-center gap-2 bg-[#FF6D1F] text-white px-6 py-2.5 rounded-xl font-bold shadow-lg shadow-orange-500/20 hover:bg-[#e0560e] transition-all hover:-translate-y-0.5 active:translate-y-0 disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            <span className="material-symbols-outlined">download</span>
-            Download PDF
+            <span className="material-symbols-outlined">
+              {isDownloading ? 'hourglass_empty' : 'download'}
+            </span>
+            {isDownloading ? 'Generating PDF...' : 'Download PDF'}
           </button>
         </div>
 
         {/* Main Content */}
         <main className="flex-grow flex flex-col items-center justify-center p-8 overflow-auto">
           
-          {/* Certificate Container (Ref for Print) */}
+          {/* Certificate Container */}
           <div ref={componentRef} className="certificate-container">
             <div 
               className="certificate-canvas rounded-[32px] flex flex-col relative overflow-hidden"
@@ -84,15 +146,9 @@ export default function CertificateView() {
                 boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
               }}
             >
-              {/* Watermark */}
-              <div 
-                className="absolute inset-0 opacity-[0.04] pointer-events-none"
-                style={{
-                    backgroundImage: "url('https://lh3.googleusercontent.com/aida-public/AB6AXuAn5cvwFVMTV_EbDcCPdhXMxfoSDcgYqobF7NPbwQr7xVvM5R6xyKeM2O8s0cXn1c4ufQvR1RzsYQQG-NNm2_HYOlnmioub61n-MdlUXv0J9K6mgLt75hgxJlObVtRUFx1sAd9Z9qwuKTdrCJ7y791ntNmgZYIShG43h2j0AJD1fXW508PXnaowi4DmRcwxWrTl5EhRWyk6Yokdl5dn7rBsIfIrLNvE6UYhVIqd1nDMx9TkLuFaZB2sI29Np5ixPR1psZLHdgFz-XQ')",
-                    backgroundRepeat: 'repeat'
-                }}
-              />
-
+              {/* Watermark - REMOVED TO PREVENT CORS ISSUES */}
+              {/* You can add this back if you host the image on your own server */}
+              
               {/* Ornaments */}
               <div className="absolute w-20 h-20 border-[#ff6d1f] top-10 left-10 border-t-2 border-l-2" />
               <div className="absolute w-20 h-20 border-[#ff6d1f] top-10 right-10 border-t-2 border-r-2" />
@@ -109,8 +165,8 @@ export default function CertificateView() {
                 
                 {/* Seal */}
                 <div className="mb-10 relative">
-                  <div className="w-[100px] h-[100px] bg-[#ff6d1f] rounded-full flex items-center justify-center shadow-lg border-4 border-[#FFD700]/30 relative overflow-hidden">
-                    <div className="absolute inset-0 rounded-full bg-gradient-to-tr from-transparent via-white/30 to-transparent"></div>
+                  <div className="w-[100px] h-[100px] bg-[#ff6d1f] rounded-full flex items-center justify-center shadow-lg relative overflow-hidden" style={{ border: '4px solid rgba(255, 215, 0, 0.3)' }}>
+                    <div className="absolute inset-0 rounded-full" style={{ background: 'linear-gradient(to top right, transparent, rgba(255, 255, 255, 0.3), transparent)' }}></div>
                     <span className="material-symbols-outlined text-white text-[56px]">verified_user</span>
                   </div>
                 </div>
@@ -131,7 +187,7 @@ export default function CertificateView() {
                 </h3>
                 
                 <p className="text-[#444444] text-[18px] max-w-[700px] leading-relaxed italic">
-                    "May the knowledge you’ve gained here open new doors and inspire continuous growth. Keep forging ahead!"
+                    "May the knowledge you've gained here open new doors and inspire continuous growth. Keep forging ahead!"
                 </p>
               </div>
 
@@ -150,12 +206,12 @@ export default function CertificateView() {
 
                 <div className="flex flex-col items-center">
                   <div className="flex items-center gap-3 mb-2">
-                    <div className="size-8 bg-[#ff6d1f] rounded-full flex items-center justify-center text-white">
+                    <div className="bg-[#ff6d1f] rounded-full flex items-center justify-center text-white" style={{ width: '32px', height: '32px' }}>
                       <span className="material-symbols-outlined text-[18px]">school</span>
                     </div>
                     <p className="font-bold text-[#222222]">SkillForge Academy</p>
                   </div>
-                  <div className="w-[240px] border-b-2 border-[#222222]/20 mb-2"></div>
+                  <div className="w-[240px] mb-2" style={{ borderBottom: '2px solid rgba(34, 34, 34, 0.2)' }}></div>
                   <p className="text-[#555555] text-[14px] uppercase tracking-widest font-bold">
                     {cert.instructor_name}, Instructor
                   </p>
@@ -165,32 +221,6 @@ export default function CertificateView() {
             </div>
           </div>
         </main>
-
-        <style>{`
-          @media print {
-            body * {
-              visibility: hidden;
-            }
-            .certificate-container, .certificate-container * {
-              visibility: visible;
-            }
-            .certificate-container {
-              position: absolute;
-              left: 0;
-              top: 0;
-              margin: 0;
-              padding: 0;
-              transform: scale(0.9); /* Adjust scale to fit page if needed */
-              transform-origin: top left;
-            }
-            .certificate-canvas {
-                box-shadow: none !important;
-            }
-            .no-print {
-                display: none !important;
-            }
-          }
-        `}</style>
       </div>
     </>
   );
