@@ -30,8 +30,8 @@ SSLCOMMERZ_VALIDATION_API = os.getenv("SSLCOMMERZ_VALIDATION_API")
 
 
 # --- FRONTEND REDIRECT URL ---
-FRONTEND_SUCCESS_URL = "http://localhost:5173/student/course" # Redirect here on success
-FRONTEND_FAIL_URL = "http://localhost:5173/payment/fail"     # Optional: Create a fail page
+FRONTEND_SUCCESS_URL = "http://localhost:5173/student/course" 
+FRONTEND_FAIL_URL = "http://localhost:5173/courses"    
 # -----------------------------
 
 
@@ -109,7 +109,7 @@ def initiate_payment(
         'cus_name': f"{current_user.first_name} {current_user.last_name}",
         'cus_email': current_user.email,
         'cus_phone': "01700000000",
-        'cus_add1': 'Dhaka',  # Ideally, get this from user profile if available
+        'cus_add1': 'Dhaka', 
         'cus_city': 'Dhaka',
         'cus_country': 'Bangladesh',
         'shipping_method': 'NO',
@@ -222,7 +222,7 @@ async def payment_success(
 
 
 
-@router.post("/payment/fail/{transaction_id}")
+@router.post("/fail/{transaction_id}")
 def payment_fail(
     transaction_id: str,
     db: Session = Depends(get_db)
@@ -234,9 +234,10 @@ def payment_fail(
         payment.status = "failed"
         db.commit()
     
-    return {"status": "failed", "message": "Payment failed"}
+    # return {"status": "failed", "message": "Payment failed"}
+    return RedirectResponse(url=FRONTEND_FAIL_URL, status_code=303)
 
-@router.post("/payment/cancel/{transaction_id}")
+@router.post("/cancel/{transaction_id}")
 def payment_cancel(
     transaction_id: str,
     db: Session = Depends(get_db)
@@ -248,7 +249,8 @@ def payment_cancel(
         payment.status = "cancelled"
         db.commit()
     
-    return {"status": "cancelled", "message": "Payment cancelled"}
+    # return {"status": "cancelled", "message": "Payment cancelled"}
+    return RedirectResponse(url=FRONTEND_FAIL_URL, status_code=303)
 
 @router.post("/payment/ipn/{transaction_id}")
 def payment_ipn(
