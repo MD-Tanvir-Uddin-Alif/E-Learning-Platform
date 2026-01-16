@@ -39,7 +39,7 @@ export default function CourseDetail() {
       if (data.type === 'free_enrollment') {
         showToast('success', 'Enrolled Successfully', 'You have been enrolled in this free course.');
         // Redirect to dashboard/my-courses after a short delay
-        setTimeout(() => navigate('student/course'), 1500);
+        setTimeout(() => navigate('/student/course'), 1500);
       } else if (data.type === 'payment_redirect' && data.GatewayPageURL) {
         // Redirect to SSLCommerz
         window.location.href = data.GatewayPageURL;
