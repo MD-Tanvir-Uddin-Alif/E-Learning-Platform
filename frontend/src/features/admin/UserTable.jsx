@@ -345,10 +345,10 @@ export default function UserTable() {
                   <span className="material-symbols-outlined text-lg">expand_more</span>
                 </div>
             </div>
-             <button className="flex items-center gap-2 px-4 py-2.5 border border-black/10 text-[#222222] text-sm font-bold rounded-lg hover:bg-[#F5E7C6]/50 transition-colors whitespace-nowrap">
+             {/* <button className="flex items-center gap-2 px-4 py-2.5 border border-black/10 text-[#222222] text-sm font-bold rounded-lg hover:bg-[#F5E7C6]/50 transition-colors whitespace-nowrap">
                 <span className="material-symbols-outlined text-[18px]">download</span>
                 <span className="hidden sm:inline">Export CSV</span>
-              </button>
+              </button> */}
           </div>
         </div>
 
