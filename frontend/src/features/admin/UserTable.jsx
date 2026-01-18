@@ -263,7 +263,7 @@ export default function UserTable() {
           <h2 className="text-2xl font-black text-[#222222] tracking-tight">User Management</h2>
           <p className="text-sm text-[#222222]/60 mt-1">Manage platform access, roles, and user details</p>
         </div>
-        <div className="flex items-center gap-4">
+        {/* <div className="flex items-center gap-4">
           <button className="relative p-2 text-[#222222]/60 hover:text-[#FF6D1F] transition-colors rounded-full hover:bg-[#FAF3E1]">
             <span className="absolute top-2 right-2 size-2 bg-[#FF6D1F] rounded-full border-2 border-white"></span>
             <span className="material-symbols-outlined">notifications</span>
@@ -272,7 +272,7 @@ export default function UserTable() {
             <span className="material-symbols-outlined text-[20px]">add</span>
             <span>Add User</span>
           </button>
-        </div>
+        </div> */}
       </header>
 
       {/* Content */}
