@@ -558,3 +558,57 @@ def delete_videos(
         "message": "Videos deleted successfully",
         "deleted_count": deleted
     }
+
+
+
+
+
+# -------------------------------
+# DELETE COURSE
+# -------------------------------
+@router.delete("/courses/{course_id}")
+def delete_course(
+    course_id: int,
+    user = Depends(instructor_required),
+    db: Session = Depends(get_db)
+):
+    """
+    Delete a course.
+    Restricted: Cannot delete if the course is Published.
+    """
+    course = db.query(CourseModel).filter(
+        CourseModel.id == course_id,
+        CourseModel.instructor_id == user.id
+    ).first()
+
+    if not course:
+        raise HTTPException(status_code=404, detail="Course not found or unauthorized")
+
+    if course.is_published:
+        raise HTTPException(
+            status_code=400, 
+            detail="Cannot delete a published course. Unpublish it first (if no students are enrolled)."
+        )
+
+    videos = db.query(VideoModel).filter(VideoModel.course_id == course.id).all()
+    
+    for video in videos:
+        try:
+            if os.path.exists(video.video_url):
+                os.remove(video.video_url)
+        except:
+            pass 
+
+    try:
+        if course.image_url and os.path.exists(course.image_url):
+            os.remove(course.image_url)
+    except:
+        pass
+
+    for video in videos:
+        db.delete(video)
+        
+    db.delete(course)
+    db.commit()
+
+    return {"message": "Course deleted successfully"}

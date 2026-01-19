@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { getCourseDetails, getAllCategories, publishCourse } from '../../api/axios'; 
+import { getCourseDetails, getAllCategories, publishCourse, deleteCourse } from '../../api/axios'; 
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000';
 
@@ -17,8 +17,10 @@ export default function InstructorCourseOverview() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 
-  // --- Toast State ---
+  // --- State ---
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [toast, setToast] = useState(null); 
+
   const showToast = (type, title, message) => {
     setToast({ type, title, message });
     setTimeout(() => setToast(null), 4000);
@@ -42,9 +44,7 @@ export default function InstructorCourseOverview() {
   const publishMutation = useMutation({
     mutationFn: (status) => publishCourse(courseId, status),
     onSuccess: (data) => {
-      // Invalidate query to refresh UI state
       queryClient.invalidateQueries(['course-details', courseId]);
-      
       const action = data.is_published ? 'Published' : 'Unpublished';
       showToast('success', `Course ${action}`, `Your course is now ${action.toLowerCase()}.`);
     },
@@ -54,15 +54,32 @@ export default function InstructorCourseOverview() {
     }
   });
 
+  // 4. Delete Mutation
+  const deleteMutation = useMutation({
+    mutationFn: () => deleteCourse(courseId),
+    onSuccess: () => {
+      showToast('success', 'Course Deleted', 'Redirecting to your courses...');
+      setShowDeleteModal(false);
+      setTimeout(() => navigate('/instructor/courses'), 1500);
+    },
+    onError: (err) => {
+      const msg = err.response?.data?.detail || 'Failed to delete course';
+      showToast('error', 'Delete Failed', msg);
+      setShowDeleteModal(false);
+    }
+  });
+
   const handlePublishToggle = () => {
-    // Toggle the current status
     const newStatus = !course.is_published;
-    // Optional client-side validation
     if (newStatus === true && (!course.videos || course.videos.length === 0)) {
        showToast('error', 'Cannot Publish', 'Please add at least one video before publishing.');
        return;
     }
     publishMutation.mutate(newStatus);
+  };
+
+  const handleDeleteConfirm = () => {
+    deleteMutation.mutate();
   };
 
   const getCategoryName = (id) => {
@@ -131,6 +148,15 @@ export default function InstructorCourseOverview() {
             </button>
             <h1 className="text-lg font-bold text-[#222222] truncate">{course.title}</h1>
             <div className="ml-auto flex gap-3">
+              {/* DELETE BUTTON */}
+              <button 
+                onClick={() => setShowDeleteModal(true)}
+                className="hidden sm:flex h-10 items-center gap-2 rounded-lg border border-red-200 bg-white px-4 text-sm font-bold text-red-500 hover:bg-red-50 transition-colors"
+              >
+                <span className="material-symbols-outlined text-[18px]">delete</span>
+                Delete
+              </button>
+
               {/* EDIT DETAILS BUTTON */}
               <button 
                 className="hidden sm:flex h-10 items-center gap-2 rounded-lg border border-[#F5E7C6] px-4 text-sm font-bold text-[#222222] hover:bg-[#FAF3E1] transition-colors"
@@ -165,6 +191,7 @@ export default function InstructorCourseOverview() {
 
         <main className="px-6 py-8 pb-20">
           
+          {/* Main Course Content Section */}
           <section className="mx-auto max-w-5xl">
             <div className="overflow-hidden rounded-[32px] bg-white shadow-xl shadow-[#F5E7C6]/50 border border-[#F5E7C6]">
               <div className="grid grid-cols-1 md:grid-cols-12">
@@ -270,7 +297,34 @@ export default function InstructorCourseOverview() {
             <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
               {course.videos && course.videos.length > 0 ? (
                 course.videos.map((v) => (
-                  <VideoCard key={v.id} v={v} />
+                  <div key={v.id} className="group relative overflow-hidden rounded-2xl bg-white shadow-sm border border-[#F5E7C6] transition-all hover:-translate-y-1 hover:shadow-xl">
+                    <div className="relative aspect-video bg-[#222222]">
+                        <div className="absolute inset-0 flex items-center justify-center text-white/20">
+                        <span className="material-symbols-outlined text-[48px]">play_circle</span>
+                        </div>
+                        <div className="absolute inset-0 bg-black/20 group-hover:bg-black/40 transition-colors" />
+                        <span className="absolute bottom-3 right-3 rounded bg-black/70 px-1.5 py-0.5 text-xs font-bold text-white backdrop-blur-md">
+                        Order: {v.order}
+                        </span>
+                    </div>
+
+                    <div className="p-4">
+                        <h3 className="mb-1 text-base font-bold text-[#222222] line-clamp-1" title={v.title}>
+                        {v.title || "Untitled Video"}
+                        </h3>
+                        <div className="flex items-center justify-between mt-3">
+                        <a 
+                            href={getMediaUrl(v.video_url)} 
+                            target="_blank" 
+                            rel="noreferrer"
+                            className="text-xs font-bold text-[#FF6D1F] hover:underline flex items-center gap-1"
+                        >
+                            <span className="material-symbols-outlined text-[16px]">open_in_new</span>
+                            Watch Video
+                        </a>
+                        </div>
+                    </div>
+                  </div>
                 ))
               ) : (
                 <div className="col-span-full py-12 text-center bg-white rounded-2xl border border-dashed border-[#F5E7C6]">
@@ -280,40 +334,63 @@ export default function InstructorCourseOverview() {
             </div>
           </section>
         </main>
+
+        {/* Delete Confirmation Modal */}
+        {showDeleteModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#222222]/40 backdrop-blur-sm animate-[fadeIn_0.2s_ease-out]">
+            <div className="w-full max-w-md bg-[#FAF3E1] border border-[#F5E7C6] rounded-[24px] p-6 shadow-2xl">
+              <div className="flex items-center gap-3 mb-4 text-red-500">
+                <span className="material-symbols-outlined text-[28px]">warning</span>
+                <h3 className="text-xl font-bold text-[#222222]">Delete Course?</h3>
+              </div>
+              
+              {course.is_published ? (
+                <div className="mb-6">
+                    <p className="text-[#222222]/70 leading-relaxed mb-2">
+                        This course is currently <span className="font-bold text-green-600">Published</span>.
+                    </p>
+                    <p className="text-sm text-red-500 font-bold">
+                        You must unpublish it first before deleting.
+                    </p>
+                </div>
+              ) : (
+                <p className="text-[#222222]/70 mb-8 leading-relaxed">
+                    Are you sure you want to delete <span className="font-bold text-[#222222]">"{course.title}"</span>? This will permanently delete all videos and data associated with this course. This action cannot be undone.
+                </p>
+              )}
+
+              <div className="flex justify-end gap-3">
+                <button 
+                  onClick={() => setShowDeleteModal(false)}
+                  className="px-5 py-2.5 rounded-xl bg-white border border-[#F5E7C6] text-[#222222] font-bold text-sm hover:bg-[#F5E7C6] transition-colors"
+                >
+                  Cancel
+                </button>
+                
+                {course.is_published ? (
+                    <button 
+                        onClick={() => {
+                            setShowDeleteModal(false);
+                            // Optionally trigger unpublish or just close
+                        }}
+                        className="px-5 py-2.5 rounded-xl bg-gray-300 text-[#222222]/50 font-bold text-sm cursor-not-allowed"
+                    >
+                        Delete
+                    </button>
+                ) : (
+                    <button 
+                        onClick={handleDeleteConfirm}
+                        className="px-5 py-2.5 rounded-xl bg-red-500 text-white font-bold text-sm hover:bg-red-600 shadow-lg shadow-red-500/20 transition-colors flex items-center gap-2"
+                        disabled={deleteMutation.isPending}
+                    >
+                        {deleteMutation.isPending ? 'Deleting...' : 'Yes, Delete'}
+                    </button>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </>
-  );
-}
-
-function VideoCard({ v }) {
-  return (
-    <div className="group relative overflow-hidden rounded-2xl bg-white shadow-sm border border-[#F5E7C6] transition-all hover:-translate-y-1 hover:shadow-xl">
-      <div className="relative aspect-video bg-[#222222]">
-        <div className="absolute inset-0 flex items-center justify-center text-white/20">
-           <span className="material-symbols-outlined text-[48px]">play_circle</span>
-        </div>
-        <div className="absolute inset-0 bg-black/20 group-hover:bg-black/40 transition-colors" />
-        <span className="absolute bottom-3 right-3 rounded bg-black/70 px-1.5 py-0.5 text-xs font-bold text-white backdrop-blur-md">
-           Order: {v.order}
-        </span>
-      </div>
-
-      <div className="p-4">
-        <h3 className="mb-1 text-base font-bold text-[#222222] line-clamp-1" title={v.title}>
-          {v.title || "Untitled Video"}
-        </h3>
-        <div className="flex items-center justify-between mt-3">
-           <a 
-             href={getMediaUrl(v.video_url)} 
-             target="_blank" 
-             rel="noreferrer"
-             className="text-xs font-bold text-[#FF6D1F] hover:underline flex items-center gap-1"
-           >
-             <span className="material-symbols-outlined text-[16px]">open_in_new</span>
-             Watch Video
-           </a>
-        </div>
-      </div>
-    </div>
   );
 }

@@ -60,6 +60,11 @@ export const manageCourseVideos = (courseId, formData) =>
 export const getCourseDetails = (courseId) =>
   api.get(`/instructor/courses/${courseId}`).then((r) => r.data);
 
+
+// Delete a course
+export const deleteCourse = (courseId) =>
+  api.delete(`/instructor/courses/${courseId}`).then((r) => r.data);
+
 // Fetch all courses created by the logged-in instructor
 export const getMyCourses = () => 
   api.get('/instructor/my-courses').then((r) => r.data);
