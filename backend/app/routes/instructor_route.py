@@ -13,11 +13,12 @@ import os
 # Import From Files
 # -------------------------------
 from models.video_progress_model import VideoProgressModel
+from models.enrollment_model import EnrollmentModel
 from models.category_model import CategoryModel
+from models.payment_model import PaymentModel
 from models.course_model import CourseModel
 from models.video_model import VideoModel
 from models.user_models import UserModel
-from models.enrollment_model import EnrollmentModel
 
 from schemas.course_schema import CourseCreate, CourseResponse, CourseOut, MultiVideoResponse, CourseListResponse, CourseDetailResponse
 
@@ -612,3 +613,72 @@ def delete_course(
     db.commit()
 
     return {"message": "Course deleted successfully"}
+
+
+# ==========================================
+# INSTRUCTOR ANALYTICS
+# ==========================================
+@router.get("/analytics/earnings")
+def get_instructor_earnings(
+    db: Session = Depends(get_db),
+    user: UserModel = Depends(instructor_required)
+):
+    """
+    Instructor Dashboard:
+    - Total Sales (100% of course price)
+    - Net Earnings (75% share)
+    - List of Sales
+    """
+    
+    # 1. Find all courses owned by this instructor
+    my_courses = db.query(CourseModel).filter(
+        CourseModel.instructor_id == user.id
+    ).all()
+    
+    my_course_ids = [c.id for c in my_courses]
+
+    if not my_course_ids:
+        return {
+            "total_sales": 0.0,
+            "net_earnings": 0.0,
+            "sales_count": 0,
+            "sales_history": []
+        }
+
+    # 2. Find completed payments for these courses
+    payments = db.query(PaymentModel).filter(
+        PaymentModel.course_id.in_(my_course_ids),
+        PaymentModel.status == "completed"
+    ).all()
+
+    total_sales = 0.0
+    sales_history = []
+
+    for p in payments:
+        total_sales += p.amount
+        
+        # Find course title from cached list or DB
+        course_title = next((c.title for c in my_courses if c.id == p.course_id), "Unknown")
+        
+        # Find student name
+        student = db.query(UserModel).filter(UserModel.id == p.user_id).first()
+        student_name = f"{student.first_name} {student.last_name}" if student else "Unknown Student"
+
+        sales_history.append({
+            "transaction_id": p.transaction_id,
+            "course_title": course_title,
+            "student_name": student_name,
+            "amount": p.amount,
+            "my_share": p.amount * 0.75,
+            "date": p.payment_date
+        })
+
+    # 3. Calculate 75% Share
+    net_earnings = total_sales * 0.75
+
+    return {
+        "total_sales": total_sales,
+        "net_earnings": net_earnings,
+        "sales_count": len(sales_history),
+        "sales_history": sales_history
+    }

@@ -13,6 +13,8 @@ from sqlalchemy.orm import Session
 from utils.send_email import send_blocked_notification_email, send_unblocked_notification_email
 from schemas.category_schema import CategoryCreate, CategoryResponse
 from models.category_model import CategoryModel
+from models.payment_model import PaymentModel
+from models.course_model import CourseModel
 from utils.permission import admin_required
 from models.user_models import UserModel
 from database_config import get_db
@@ -172,3 +174,62 @@ async def unblock_user(
         print(f"Failed to send unblock email: {str(e)}")
 
     return {"message": f"User {user_to_unblock.first_name} has been unblocked."}
+
+
+
+@router.get("/analytics/earnings")
+def get_admin_earnings(
+    db: Session = Depends(get_db),
+    admin_user: UserModel = Depends(admin_required)
+):
+    """
+    Admin Dashboard:
+    - Total Gross Revenue (100%)
+    - Admin Net Revenue (25%)
+    - Total Instructor Payouts (75%)
+    - All Transaction History
+    """
+    
+    # 1. Fetch all COMPLETED payments
+    payments = db.query(PaymentModel).filter(
+        PaymentModel.status == "completed"
+    ).all()
+
+    total_gross_revenue = 0.0
+    transactions = []
+
+    for p in payments:
+        total_gross_revenue += p.amount
+        
+        # Get course title
+        course = db.query(CourseModel).filter(CourseModel.id == p.course_id).first()
+        course_title = course.title if course else "Unknown Course"
+        
+        # Get instructor info
+        instructor_name = "Unknown"
+        if course:
+            inst = db.query(UserModel).filter(UserModel.id == course.instructor_id).first()
+            if inst:
+                instructor_name = f"{inst.first_name} {inst.last_name}"
+
+        transactions.append({
+            "transaction_id": p.transaction_id,
+            "course_title": course_title,
+            "instructor": instructor_name,
+            "amount": p.amount,
+            "date": p.payment_date,
+            "admin_share": p.amount * 0.25,
+            "instructor_share": p.amount * 0.75
+        })
+
+    # 2. Calculate Splits
+    admin_net_revenue = total_gross_revenue * 0.25
+    instructor_payouts = total_gross_revenue * 0.75
+
+    return {
+        "total_gross_revenue": total_gross_revenue,
+        "admin_net_revenue": admin_net_revenue,
+        "total_instructor_payouts": instructor_payouts,
+        "total_transactions": len(transactions),
+        "transactions": transactions
+    }

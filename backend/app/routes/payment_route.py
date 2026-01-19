@@ -44,6 +44,11 @@ def initiate_payment(
 ):
     """Handle enrollment for both Free and Paid courses"""
     
+    if current_user.role.value == "admin":
+        raise HTTPException(
+            status_code=403, 
+            detail="Admins cannot purchase courses. Please register as a student to buy courses."
+        )
     # 1. Check if course exists
     course = db.query(CourseModel).filter(CourseModel.id == course_id).first()
     if not course:
