@@ -27,6 +27,7 @@ const SideBar = () => {
     instructor: [
       // { icon: 'add_circle', label: 'Add Course', to: '/course/add' },
       { icon: 'menu_book', label: 'Courses', to: '/instructor/courses' },
+      { icon: 'payments', label: 'My Revenue', to: '/instructor-earnings'},
       // { icon: 'menu_book', label: 'Videos', to: '/video/add' },
 
     ],
@@ -34,6 +35,7 @@ const SideBar = () => {
       { icon: 'post_add', label: 'Add Category', to: '/add-category' },
       { icon: 'category', label: 'Categories', to: '/admin-category' },
       { icon: 'group', label: 'Users', to: '/users' },
+      { icon: 'monetization_on', label: 'SiteRevenue', to: '/admin-RevenueDashboard'},
     ]
   };
 

@@ -25,6 +25,8 @@ import CourseDetails from './pages/CourseDetails';
 import StudentCourseDashboard from './features/student/StudentCourseDashboard';
 import VideoPlayer from './features/student/VideoPlayer';
 import CertificateView from './features/student/CertificateView';
+import RevenueDashboard from './features/admin/RevenueDashboard';
+import InstructorEarnings from './features/instructor/InstructorEarnings';
 
 const router = createBrowserRouter([
   /* navbar + footer */
@@ -66,11 +68,13 @@ const router = createBrowserRouter([
       { path: 'users', element: <UserTable /> },
       { path: 'add-category', element: <AddCategory />},
       { path: 'admin-category', element: <CategoryAdmin />},
+      { path: 'admin-RevenueDashboard', element:<ProtectedRoute><RevenueDashboard/></ProtectedRoute>},
       //instractor path
       { path: 'course/add', element: <CreateCourse />},
       { path: 'video/add', element: <AddVideos />},
       { path: 'instructor/courses', element: <MyCoursesGallery />},
       { path: 'instructor/course/:courseId', element: <InstructorCourseOverview />},
+      { path: 'instructor-earnings/', element: <ProtectedRoute><InstructorEarnings /></ProtectedRoute>}
     ]
   },
 

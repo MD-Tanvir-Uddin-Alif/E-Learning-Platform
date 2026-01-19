@@ -56,6 +56,10 @@ export const addVideosToCourse = (courseId, formData) =>
 export const manageCourseVideos = (courseId, formData) => 
   apiMultipart.put(`/instructor/courses/${courseId}/manage-videos`, formData).then((r) => r.data);
 
+// Get Instructor Earnings
+export const getInstructorEarnings = () =>
+  api.get('/instructor/analytics/earnings').then((r) => r.data);
+
 // Fetch details of a specific course
 export const getCourseDetails = (courseId) =>
   api.get(`/instructor/courses/${courseId}`).then((r) => r.data);
@@ -114,6 +118,11 @@ export const unblockUser = async (userId) => {
   const response = await api.put(`/admin/users/${userId}/unblock`);
   return response.data;
 };
+
+
+// Get Admin Earnings
+export const getAdminEarnings = () =>
+  api.get('/admin/analytics/earnings').then((r) => r.data);
 
 
 
