@@ -24,7 +24,6 @@ export default function StudentPaymentHistory() {
   const [activeTab, setActiveTab] = useState('all');
   const [selectedReceipt, setSelectedReceipt] = useState(null);
 
-  // Fetch Payment History
   const { data: payments = [], isLoading, isError } = useQuery({
     queryKey: ['my-payment-history'],
     queryFn: getMyPaymentHistory,
@@ -34,7 +33,7 @@ export default function StudentPaymentHistory() {
   const filteredPayments = payments.filter(p => {
     if (activeTab === 'all') return true;
     if (activeTab === 'successful') return p.status === 'completed';
-    if (activeTab === 'pending') return p.status === 'pending'; // In case API is updated to return all statuses
+    // if (activeTab === 'pending') return p.status === 'pending';
     return true;
   });
 
@@ -67,7 +66,7 @@ export default function StudentPaymentHistory() {
         {/* Tabs Navigation */}
         <div className="pb-4">
           <div className="flex border-b px-4 gap-8" style={{ borderColor: 'rgba(0,0,0,.05)' }}>
-            {['all', 'successful', 'pending'].map((tab) => (
+            {['all'].map((tab) => (
                 <button
                     key={tab}
                     onClick={() => setActiveTab(tab)}
