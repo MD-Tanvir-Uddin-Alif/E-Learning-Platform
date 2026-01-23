@@ -24,37 +24,35 @@ export default function VideoPlayer() {
   const [showCompletionModal, setShowCompletionModal] = useState(false);
   const [hasMarkedComplete, setHasMarkedComplete] = useState(false);
   
-  // Rating Modal States
+  // Rating Modal 
   const [showRatingModal, setShowRatingModal] = useState(false);
   const [rating, setRating] = useState(0);
   const [hoverRating, setHoverRating] = useState(0);
   const [comment, setComment] = useState('');
   const [hasRated, setHasRated] = useState(false);
   
-  // Toast State
   const [toast, setToast] = useState(null);
 
-  // Toast Helper Functions
   const showToast = (type, title, message) => {
     setToast({ type, title, message });
     setTimeout(() => setToast(null), 4000);
   };
 
-  // 1. Fetch course details with videos
+  // Fetch course details with videos
   const { data: courseData, isLoading: isLoadingCourse, isError } = useQuery({
     queryKey: ['enrolled-course', courseId],
     queryFn: () => getEnrolledCourseDetails(courseId),
     enabled: !!courseId,
   });
 
-  // 2. Fetch video progress
+  // Fetch video progress
   const { data: progressData, isLoading: isLoadingProgress } = useQuery({
     queryKey: ['course-progress', courseId],
     queryFn: () => getCourseProgress(courseId),
     enabled: !!courseId,
   });
 
-  // 3. Mutation to mark video as watched
+  // Mutation for mark video as watched
   const markWatchedMutation = useMutation({
     mutationFn: (videoId) => updateVideoProgress(videoId, true),
     onSuccess: (_, videoId) => {
@@ -67,7 +65,7 @@ export default function VideoPlayer() {
     },
   });
 
-  // 4. Mutation to submit rating
+  // Mutation to submit rating
   const submitRatingMutation = useMutation({
     mutationFn: (data) => submitCourseRating(courseId, data),
     onSuccess: () => {
@@ -81,7 +79,7 @@ export default function VideoPlayer() {
     }
   });
 
-  // 5. Initialize State from API Data
+  // Initialize State from API Data
   useEffect(() => {
     if (progressData?.videos && courseData?.videos) {
       const watched = new Set(
@@ -107,7 +105,7 @@ export default function VideoPlayer() {
     setHasMarkedComplete(false);
   }, [currentVideoIndex]);
 
-  // 6. Track video progress (The 90% Rule)
+  // Track video progress
   useEffect(() => {
     const video = videoRef.current;
     const videos = courseData?.videos || [];
@@ -131,21 +129,19 @@ export default function VideoPlayer() {
     return () => video.removeEventListener('timeupdate', handleTimeUpdate);
   }, [currentVideoIndex, courseData, watchedVideos, hasMarkedComplete, markWatchedMutation]);
 
-  // 7. Auto-show Rating Modal when progress reaches 100% (only once)
+  // Auto-show Rating Modal when progress reaches 100% (only once)
   useEffect(() => {
     const progressPercentage = progressData ? progressData.completion_percentage : 0;
     
     if (Math.round(progressPercentage) === 100 && !hasRated && !showRatingModal) {
-      // Show rating modal automatically when course is 100% complete
       const timer = setTimeout(() => {
         setShowRatingModal(true);
-      }, 1000); // Small delay for better UX
+      }, 1000); 
       
       return () => clearTimeout(timer);
     }
   }, [progressData, hasRated, showRatingModal]);
 
-  // Toast Render Function
   const renderToast = () => {
     if (!toast) return null;
     const isError = toast.type === 'error';
@@ -261,7 +257,7 @@ export default function VideoPlayer() {
 
   const handleSkipRating = () => {
     setShowRatingModal(false);
-    setHasRated(true); // Mark as rated so modal doesn't show again
+    setHasRated(true); 
   };
 
   return (
@@ -282,7 +278,6 @@ export default function VideoPlayer() {
         }
       `}</style>
 
-      {/* Toast Notification */}
       {renderToast()}
       
       {/* ----------  TOP NAV  ---------- */}
@@ -349,7 +344,6 @@ export default function VideoPlayer() {
         </div>
       </header>
 
-      {/* ----------  CONTENT AREA  ---------- */}
       <div className="flex-1 flex overflow-hidden relative">
         {/* LEFT: Video & Actions */}
         <main
@@ -551,12 +545,10 @@ export default function VideoPlayer() {
             className="p-8 rounded-2xl shadow-2xl max-w-md w-full mx-4 relative overflow-hidden border"
             style={{ backgroundColor: '#FAF3E1', borderColor: '#F5E7C7' }}
           >
-            {/* Background Decorations */}
             <div className="absolute -top-10 -left-10 w-40 h-40 rounded-full blur-3xl" style={{ backgroundColor: 'rgba(255,109,31,.08)' }} />
             <div className="absolute -bottom-10 -right-10 w-40 h-40 rounded-full blur-3xl" style={{ backgroundColor: 'rgba(255,109,31,.08)' }} />
             
             <div className="relative">
-              {/* Header */}
               <div className="text-center mb-6">
                 <div className="mx-auto size-16 rounded-full flex items-center justify-center mb-4" style={{ backgroundColor: 'rgba(255,109,31,.1)', color: '#ff6d1f' }}>
                   <span className="material-symbols-outlined" style={{ fontSize: 32 }}>star</span>

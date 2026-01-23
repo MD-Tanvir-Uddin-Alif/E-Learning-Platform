@@ -3,7 +3,6 @@ import { useQuery } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import { getMyCourses } from '../../api/axios';
 
-// Base URL for images
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000';
 
 const getImageUrl = (path) => {
@@ -38,14 +37,12 @@ export default function MyCoursesGallery() {
 
   return (
     <>
-      {/* fonts & icons */}
       <link rel="preconnect" href="https://fonts.googleapis.com" />
       <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
       <link href="https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600;700&family=Material+Symbols+Outlined:opsz,wght,FILL@20..48,100..700,0..1&display=swap" rel="stylesheet" />
 
       <div className="min-h-screen bg-[#FAF3E1]/30 font-['Lexend'] text-[#222222] p-8">
         
-        {/* Header */}
         <div className="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
           <div>
             <h1 className="text-3xl font-bold tracking-tight text-[#222222]">My Courses</h1>
@@ -97,7 +94,7 @@ export default function MyCoursesGallery() {
               <div 
                 key={course.id} 
                 className="group relative bg-white border border-[#F5E7C6] rounded-[24px] overflow-hidden hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col h-full cursor-pointer"
-                onClick={() => navigate(`/instructor/course/${course.id}`)} // Make entire card clickable
+                onClick={() => navigate(`/instructor/course/${course.id}`)} 
               >
                 {/* Thumbnail */}
                 <div className="aspect-video bg-[#FAF3E1] relative overflow-hidden">
@@ -113,7 +110,7 @@ export default function MyCoursesGallery() {
                     </div>
                   )}
                   
-                  {/* Overlay Actions - Changed to "View Details" */}
+                  {/* "View Details" */}
                   <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center backdrop-blur-[2px]">
                     <span className="flex items-center gap-2 bg-white/20 backdrop-blur-md text-white font-bold px-4 py-2 rounded-full border border-white/30">
                       <span className="material-symbols-outlined text-[20px]">visibility</span>

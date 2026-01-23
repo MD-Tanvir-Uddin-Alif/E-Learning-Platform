@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useMutation } from '@tanstack/react-query';
-import { loginUser } from '../../api/auth'; // Ensure path is correct
+import { loginUser } from '../../api/auth'; 
 import { Link, useNavigate } from 'react-router-dom';
 
 const Login = () => {
@@ -8,13 +8,10 @@ const Login = () => {
   const [showPwd, setShowPwd] = useState(false);
   const [formData, setFormData] = useState({ email: '', password: '' });
 
-  // --- Toast State ---
-  const [toast, setToast] = useState(null); // { type: 'success'|'error'|'info', title: '', message: '' }
+  const [toast, setToast] = useState(null); 
 
-  // --- Helpers ---
   const showToast = (type, title, message) => {
     setToast({ type, title, message });
-    // Auto-dismiss after 4 seconds
     setTimeout(() => setToast(null), 4000);
   };
 
@@ -25,12 +22,10 @@ const Login = () => {
     onSuccess: (data) => {
       localStorage.setItem('token', data.access_token);
       
-      // --- CRITICAL UPDATE: Notify Navbar to update state ---
       window.dispatchEvent(new Event('auth-change'));
       
       showToast('success', 'Welcome Back', 'Login successful! Redirecting to profile...');
       
-      // Small delay to allow the user to see the success toast before redirecting
       setTimeout(() => {
         navigate('/profile');
       }, 1500);
@@ -46,16 +41,14 @@ const Login = () => {
     mutate(formData);
   };
 
-  // --- Render Toast Component ---
   const renderToast = () => {
     if (!toast) return null;
 
     let icon = '';
     let barColorClass = '';
-    // Determine icon and color based on type
     if (toast.type === 'success') {
       icon = 'check';
-      barColorClass = 'bg-[#FF6D1F]'; // Brand Orange
+      barColorClass = 'bg-[#FF6D1F]'; 
     } else if (toast.type === 'error') {
       icon = 'priority_high';
       barColorClass = 'bg-red-500'; 
@@ -68,18 +61,15 @@ const Login = () => {
       <div className="fixed top-5 right-5 z-50 animate-[slideDown_0.3s_ease-out]">
         <div className="pointer-events-auto relative w-[320px] overflow-hidden rounded-xl bg-[#F5E7C6] shadow-xl transition-transform hover:-translate-y-1 duration-300 group border border-[#ead7cd]">
           <div className="flex items-start gap-3 p-4 pr-10">
-            {/* Icon Circle */}
             <div 
               className={`flex size-6 shrink-0 items-center justify-center rounded-full text-white ${toast.type === 'error' ? 'bg-red-500' : toast.type === 'info' ? 'bg-blue-500' : 'bg-[#FF6D1F]'}`}
             >
               <span className="material-symbols-outlined text-[16px] font-bold">{icon}</span>
             </div>
-            {/* Content */}
             <div className="flex flex-col gap-1">
               <h3 className="font-display text-sm font-semibold text-[#222222]">{toast.title}</h3>
               <p className="font-display text-xs text-[#222222]/80 leading-normal">{toast.message}</p>
             </div>
-            {/* Close Button */}
             <button 
               onClick={closeToast}
               className="absolute right-3 top-3 flex items-center justify-center text-[#222222]/40 transition-colors hover:text-[#FF6D1F]"
@@ -87,7 +77,6 @@ const Login = () => {
               <span className="material-symbols-outlined text-[16px]">close</span>
             </button>
           </div>
-          {/* Progress Bar Decoration */}
           <div className="h-[3px] w-full bg-[#FAF3E1]">
             <div className={`h-full w-full ${barColorClass}`}></div>
           </div>
@@ -113,7 +102,6 @@ const Login = () => {
         }
       `}</style>
 
-      {/* Render Toast Container */}
       {renderToast()}
 
       <div className="min-h-screen flex flex-col relative bg-[#FAF3E1] text-[#222222] font-['Lexend'] overflow-hidden">

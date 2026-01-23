@@ -17,7 +17,6 @@ export default function InstructorCourseOverview() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 
-  // --- State ---
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [toast, setToast] = useState(null); 
 
@@ -27,20 +26,20 @@ export default function InstructorCourseOverview() {
   };
   const closeToast = () => setToast(null);
 
-  // 1. Fetch Course Details
+  // Fetch Course Details
   const { data: course, isLoading, isError } = useQuery({
     queryKey: ['course-details', courseId],
     queryFn: () => getCourseDetails(courseId),
     enabled: !!courseId,
   });
 
-  // 2. Fetch Categories
+  // Fetch Categories
   const { data: categories = [] } = useQuery({
     queryKey: ['categories-select'],
     queryFn: getAllCategories,
   });
 
-  // 3. Publish Mutation
+  // Publish Mutation
   const publishMutation = useMutation({
     mutationFn: (status) => publishCourse(courseId, status),
     onSuccess: (data) => {
@@ -54,7 +53,7 @@ export default function InstructorCourseOverview() {
     }
   });
 
-  // 4. Delete Mutation
+  // Delete Mutation
   const deleteMutation = useMutation({
     mutationFn: () => deleteCourse(courseId),
     onSuccess: () => {
@@ -87,7 +86,6 @@ export default function InstructorCourseOverview() {
     return cat ? cat.name : `Category #${id}`;
   };
 
-  // --- Render Toast ---
   const renderToast = () => {
     if (!toast) return null;
     const isError = toast.type === 'error';
@@ -191,7 +189,6 @@ export default function InstructorCourseOverview() {
 
         <main className="px-6 py-8 pb-20">
           
-          {/* Main Course Content Section */}
           <section className="mx-auto max-w-5xl">
             <div className="overflow-hidden rounded-[32px] bg-white shadow-xl shadow-[#F5E7C6]/50 border border-[#F5E7C6]">
               <div className="grid grid-cols-1 md:grid-cols-12">
@@ -210,7 +207,7 @@ export default function InstructorCourseOverview() {
                    )}
                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent md:bg-gradient-to-r" />
                    
-                   {/* Publish Badge Overlay */}
+                   {/* Publish Badge */}
                    <div className="absolute top-4 left-4">
                       <span className={`px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wide shadow-md ${course.is_published ? 'bg-green-500 text-white' : 'bg-yellow-400 text-black'}`}>
                         {course.is_published ? 'Live' : 'Draft'}
@@ -245,17 +242,17 @@ export default function InstructorCourseOverview() {
                         {course.is_paid ? `$${course.price}` : 'Free'}
                       </span>
                     </div>
-                    <div className="flex flex-col">
+                    {/* <div className="flex flex-col">
                       <span className="text-xs font-bold text-[#222222]/40 uppercase">Students</span>
                       <span className="text-xl font-bold text-[#222222]">0</span>
-                    </div>
-                     <div className="flex flex-col">
+                    </div> */}
+                     {/* <div className="flex flex-col">
                       <span className="text-xs font-bold text-[#222222]/40 uppercase">Rating</span>
                       <div className="flex items-center gap-1">
                         <span className="text-xl font-bold text-[#222222]">N/A</span>
                         <span className="material-symbols-outlined text-sm text-[#FF6D1F] mb-1">star</span>
                       </div>
-                    </div>
+                    </div> */}
                   </div>
                   
                    <div className="mt-8">

@@ -7,7 +7,6 @@ const EmailVerification = () => {
 
   return (
     <>
-      {/* Fonts + icon helper */}
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600;700;800;900&display=swap');
         @import url('https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght@100..700&display=swap');
@@ -24,21 +23,16 @@ const EmailVerification = () => {
       `}</style>
 
       <div className="min-h-screen flex flex-col bg-[#FAF3E1] text-[#222222] font-['Lexend']">
-        {/* Main Content */}
         <main className="flex-1 flex items-center justify-center p-4 w-full">
           <div className="w-full max-w-[520px] bg-white backdrop-blur-sm rounded-2xl p-8 shadow-sm border border-[#F5E7C6] flex flex-col gap-8 relative overflow-hidden">
-            {/* Decorative Elements */}
             <div className="absolute -top-10 -right-10 w-32 h-32 bg-[#F5E7C6] rounded-full blur-3xl opacity-50 pointer-events-none"></div>
             <div className="absolute -bottom-10 -left-10 w-40 h-40 bg-[#ff6d1f]/10 rounded-full blur-3xl pointer-events-none"></div>
 
-            {/* Verification State */}
             <div className="flex flex-col items-center text-center gap-6 relative z-10">
-              {/* Icon */}
               <div className="size-24 bg-[#ff6d1f]/10 rounded-full flex items-center justify-center mb-2">
                 <span className="material-symbols-outlined text-[#ff6d1f] text-[48px]">mark_email_unread</span>
               </div>
 
-              {/* Headline & Subtext */}
               <div className="flex flex-col gap-2">
                 <h1 className="text-[#222222] text-3xl font-black tracking-tight">
                   Verify your email

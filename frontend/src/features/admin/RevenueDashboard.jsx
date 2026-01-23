@@ -21,7 +21,7 @@ const formatDate = (dateString) => {
 };
 
 export default function RevenueDashboard() {
-  // Fetch Earnings Data
+  // Fetch Earnings 
   const { data: earnings, isLoading, isError } = useQuery({
     queryKey: ['admin-earnings'],
     queryFn: getAdminEarnings,
@@ -44,7 +44,6 @@ export default function RevenueDashboard() {
             </p>
           </div>
 
-          {/* KPI Cards */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {/* Gross Revenue */}
             <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
@@ -97,7 +96,6 @@ export default function RevenueDashboard() {
       {/* Transactions Table */}
       <main className="max-w-7xl mx-auto px-6 md:px-12 -mt-24 pb-12">
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-          {/* Table Header */}
           <div className="px-6 py-4 bg-gray-50 border-b border-gray-200">
             <h2 className="text-xl font-bold" style={{ color: '#1d120c' }}>
               Transaction History
@@ -184,7 +182,6 @@ export default function RevenueDashboard() {
             </table>
           </div>
 
-          {/* Table Footer */}
           <div className="px-6 py-4 border-t border-gray-200 bg-gray-50 flex justify-between items-center">
             <p className="text-sm font-semibold text-gray-500">
               Showing {earnings?.transactions?.length || 0} transactions

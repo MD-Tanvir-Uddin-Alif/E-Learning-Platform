@@ -1,9 +1,8 @@
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
-import { getPublicCourses, getAllCategories } from '../api/axios'; // Use getCategoriesForSelect which points to public/all-categories
+import { getPublicCourses, getAllCategories } from '../api/axios'; 
 
-// Base URL for images
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000';
 
 const getImageUrl = (path) => {
@@ -32,7 +31,7 @@ export default function CourseCatalog() {
 
   const courses = data?.courses || [];
 
-  // Toggle Category Selection
+  // Category Selection
   const toggleCategory = (catName) => {
     setSelectedCategories(prev => 
       prev.includes(catName) 
@@ -97,7 +96,6 @@ export default function CourseCatalog() {
               </div>
             </aside>
 
-            {/* main catalog */}
             <div className="flex flex-col gap-8">
               
               {/* header / search */}
@@ -112,7 +110,7 @@ export default function CourseCatalog() {
                   <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-[#222222]/40">search</span>
                   <input 
                     type="text" 
-                    placeholder="Search courses, skills, or instructors..." 
+                    placeholder="Search courses..." 
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                     className="w-full pl-12 pr-4 py-3 bg-white border-2 border-[#F5E7C6] rounded-xl focus:outline-none focus:border-[#FF6D1F] focus:ring-0 transition-colors placeholder-[#222222]/30 text-[#222222] font-medium"
@@ -159,7 +157,6 @@ export default function CourseCatalog() {
           </div>
         </main>
 
-        {/* simple footer */}
         <footer className="bg-white border-t border-[#ead7cd] py-8 mt-auto">
           <div className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row justify-between items-center gap-4">
             <div className="flex items-center gap-2">
@@ -208,7 +205,6 @@ function CourseCard({ course, onClick }) {
         {/* instructor & rating */}
         <div className="flex items-center justify-between text-xs text-[#222222]/60">
           <div className="flex items-center gap-1.5">
-             {/* If instructor image exists, can show it, else icon */}
              <span className="material-symbols-outlined text-[16px]">person</span>
              <span className="font-medium truncate max-w-[100px]">{course.instructor_name}</span>
           </div>

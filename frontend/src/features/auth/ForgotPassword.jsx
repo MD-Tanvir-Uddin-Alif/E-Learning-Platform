@@ -7,10 +7,8 @@ const ForgotPassword = () => {
   const [email, setEmail] = useState('');
   const [isSubmitted, setIsSubmitted] = useState(false);
   
-  // --- Toast State ---
   const [toast, setToast] = useState(null); 
 
-  // --- Helpers ---
   const showToast = (type, title, message) => {
     setToast({ type, title, message });
     setTimeout(() => setToast(null), 4000);
@@ -35,7 +33,6 @@ const ForgotPassword = () => {
     mutate(email);
   };
 
-  // --- Render Toast Component ---
   const renderToast = () => {
     if (!toast) return null;
 
@@ -93,7 +90,6 @@ const ForgotPassword = () => {
       <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-[#FAF3E1] to-[#F5E7C6] font-['Lexend']">
         <div className="w-full max-w-[384px] flex flex-col items-center">
 
-          {/* Logo */}
           <div className="mb-8 flex items-center gap-2">
             <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#FF6D1F] text-white shadow-md transition-transform group-hover:scale-105">
                 <span className="material-symbols-outlined text-[24px]">school</span>
@@ -104,10 +100,8 @@ const ForgotPassword = () => {
           {/* Card */}
           <div className="w-full bg-[#FAF3E1] border border-[#F5E7C6] rounded-3xl shadow-lg p-8 sm:p-10 flex flex-col gap-6 relative overflow-hidden">
             
-            {/* Logic to Toggle between Form and Success Message */}
             {!isSubmitted ? (
               <>
-                {/* Heading */}
                 <div className="flex flex-col gap-2 text-center">
                   <h1 className="text-[#222222] text-[28px] font-bold leading-tight">Forgot your password?</h1>
                   <p className="text-[#222222]/70 text-base font-normal leading-relaxed">Enter your email and we’ll send a reset link</p>
@@ -139,7 +133,6 @@ const ForgotPassword = () => {
                 </form>
               </>
             ) : (
-              /* Success State (Styled to match new design) */
               <div className="flex flex-col items-center gap-6 text-center animate-[slideDown_0.3s_ease-out]">
                  <div className="flex h-16 w-16 items-center justify-center rounded-full bg-[#ff6d1f]/10 text-[#ff6d1f]">
                   <span className="material-symbols-outlined text-[32px]">check_mail</span>
@@ -159,7 +152,6 @@ const ForgotPassword = () => {
               </div>
             )}
 
-            {/* Footer Link */}
             <div className="text-center mt-2">
               <Link
                 to="/login"

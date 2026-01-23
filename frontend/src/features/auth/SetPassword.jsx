@@ -13,14 +13,11 @@ const ResetPassword = () => {
     confirm_password: ''
   });
   
-  // Design requires independent toggles for better UX
   const [showNew, setShowNew] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   
-  // --- Toast State ---
   const [toast, setToast] = useState(null); 
 
-  // --- Helpers ---
   const showToast = (type, title, message) => {
     setToast({ type, title, message });
     setTimeout(() => setToast(null), 4000);
@@ -28,7 +25,7 @@ const ResetPassword = () => {
 
   const closeToast = () => setToast(null);
 
-  // Check token on mount
+  // Check token 
   useEffect(() => {
     if (!token) {
       showToast('error', 'Invalid Link', 'Missing reset token. Please request a new link.');
@@ -60,7 +57,6 @@ const ResetPassword = () => {
     mutate({ token, new_password: formData.new_password });
   };
 
-  // --- Render Toast Component ---
   const renderToast = () => {
     if (!toast) return null;
 
@@ -117,7 +113,6 @@ const ResetPassword = () => {
 
       <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-b from-[#FAF3E1] to-[#F5E7C6] p-4 font-['Lexend'] text-[#222222]">
         
-        {/* Header (Logo) */}
         <div className="mb-8 flex flex-col items-center gap-2">
           <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[#FF6D1F] text-[#FAF3E1] shadow-lg transition-transform hover:scale-105">
             <span className="material-symbols-outlined text-[28px]">school</span>
@@ -179,7 +174,6 @@ const ResetPassword = () => {
                 </div>
               </div>
 
-              {/* Submit Button */}
               <button
                 type="submit"
                 disabled={isPending}
@@ -200,7 +194,6 @@ const ResetPassword = () => {
           )}
         </div>
 
-        {/* Footer Links */}
         <div className="mt-8 flex flex-col items-center gap-4">
            <Link to="/login" className="flex items-center gap-2 text-[#222222] font-medium hover:text-[#ff6d1f] transition-colors text-sm">
               <span className="material-symbols-outlined text-sm">arrow_back</span>

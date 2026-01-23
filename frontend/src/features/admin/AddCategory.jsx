@@ -6,7 +6,7 @@ export default function AddCategory() {
   const location = useLocation();
   const navigate = useNavigate();
   
-  // Check if we are in "Edit Mode" based on passed state
+  // "Edit Mode"
   const categoryToEdit = location.state?.categoryToEdit;
   const isEditMode = !!categoryToEdit;
 
@@ -14,7 +14,7 @@ export default function AddCategory() {
   const [description, setDescription] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
-  // --- Initialize Form Data if Editing ---
+  // ---if Editing ---
   useEffect(() => {
     if (isEditMode) {
       setName(categoryToEdit.name);
@@ -43,13 +43,12 @@ export default function AddCategory() {
 
     try {
       if (isEditMode) {
-        // UPDATE Logic
+        // UPDATE 
         await updateCategory(categoryToEdit.id, { name, description });
         showToast('success', 'Category Updated', 'Changes saved successfully!');
-        // Optional: Redirect back after short delay
         setTimeout(() => navigate('/admin-category'), 1500); 
       } else {
-        // CREATE Logic
+        // CREATE 
         await createCategory({ name, description });
         showToast('success', 'Category Created', 'New category added successfully!');
         setName('');
@@ -199,7 +198,6 @@ export default function AddCategory() {
               </div>
             </form>
 
-            {/* Decorative blobs */}
             <div className="absolute top-0 left-0 w-full h-full pointer-events-none z-0">
                <div className="absolute top-[-10%] right-[-5%] w-[40%] h-[40%] bg-[#FF6D1F]/5 blur-[60px] rounded-full" />
                <div className="absolute bottom-[-10%] left-[-5%] w-[40%] h-[40%] bg-[#F5E7C6] blur-[60px] rounded-full" />

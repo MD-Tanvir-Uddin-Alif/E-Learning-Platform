@@ -1,9 +1,8 @@
 import React from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
-import { getMyEnrollments } from '../../api/axios'; // Updated import path
+import { getMyEnrollments } from '../../api/axios'; 
 
-// Base URL for images
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000';
 
 const getImageUrl = (path) => {
@@ -16,14 +15,12 @@ const getImageUrl = (path) => {
 export default function StudentCourseDashboard() {
   const navigate = useNavigate();
 
-  // Fetch Enrollments
   const { data: enrollments = [], isLoading, isError } = useQuery({
     queryKey: ['my-enrollments'],
     queryFn: getMyEnrollments,
   });
 
   const handleResume = (courseId) => {
-    // Navigate to the video player route
     navigate(`/learn/${courseId}`);
   };
 
@@ -33,10 +30,8 @@ export default function StudentCourseDashboard() {
       
       {/* ----------  MAIN CONTENT  ---------- */}
       <main className="flex-1 flex flex-col h-full overflow-hidden relative">
-        {/* Scrollable area */}
         <div className="flex-1 overflow-y-auto p-6 lg:p-10">
           <div className="max-w-6xl mx-auto flex flex-col gap-8">
-            {/* Welcome Header */}
             <div>
               <h1 className="text-3xl font-bold tracking-tight" style={{ color: '#222222' }}>
                 Welcome back! 👋
@@ -69,7 +64,6 @@ export default function StudentCourseDashboard() {
               </div> */}
             </div>
 
-            {/* Content Split */}
             <div className="flex flex-col xl:flex-row gap-8">
               {/* Left Column: My Courses */}
               <div className="flex-1 flex flex-col gap-6">

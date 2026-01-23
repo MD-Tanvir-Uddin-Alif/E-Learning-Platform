@@ -30,7 +30,6 @@ export default function InstructorEarnings() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header Section */}
       <section className="w-full px-6 md:px-12 pt-12 pb-32" style={{ background: 'linear-gradient(to right, #FAF3E1, #F5E7C6)' }}>
         <div className="max-w-6xl mx-auto">
           <h1 className="text-4xl font-black mb-2" style={{ color: '#1d120c' }}>
@@ -50,7 +49,6 @@ export default function InstructorEarnings() {
         </div>
       </section>
 
-      {/* Main Content */}
       <div className="max-w-6xl mx-auto px-6 md:px-12 -mt-24 pb-12">
         {/* KPI Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">

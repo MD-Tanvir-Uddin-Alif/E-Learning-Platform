@@ -2,10 +2,9 @@ import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import * as AdminApi from '../../api/axios';
 
-// Base URL for images
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000';
 
-/* ---- Helper Components ---- */
+/* ---- Helper ---- */
 const RoleBadge = ({ role }) => {
   const base = 'inline-flex items-center px-2.5 py-1 rounded-md text-xs font-bold border shadow-sm uppercase';
   const normalizedRole = String(role || '').toLowerCase();
@@ -32,20 +31,17 @@ export default function UserTable() {
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
 
-  // --- Toast State ---
   const [toast, setToast] = useState(null); 
   
-  // --- Modal State (Replaces window.confirm) ---
   const [confirmModal, setConfirmModal] = useState({ show: false, user: null, type: null });
 
-  // --- Helpers ---
   const showToast = (type, title, message) => {
     setToast({ type, title, message });
     setTimeout(() => setToast(null), 4000);
   };
   const closeToast = () => setToast(null);
 
-  // 1. Fetch Users Data
+  // Fetch User
   const { data: users = [], isLoading, isError } = useQuery({
     queryKey: ['admin-users'],
     queryFn: async () => {
@@ -61,18 +57,18 @@ export default function UserTable() {
     },
   });
 
-  // 2. Mutations
+  // Mutations
   const blockMutation = useMutation({
     mutationFn: AdminApi.blockUser,
     onSuccess: () => {
         queryClient.invalidateQueries(['admin-users']);
         showToast('success', 'User Blocked', 'Access has been revoked for this user.');
-        setConfirmModal({ show: false, user: null, type: null }); // Close modal
+        setConfirmModal({ show: false, user: null, type: null }); 
     },
     onError: (err) => {
         const msg = err.response?.data?.detail || 'Failed to block user';
         showToast('error', 'Action Failed', msg);
-        setConfirmModal({ show: false, user: null, type: null }); // Close modal
+        setConfirmModal({ show: false, user: null, type: null });
     }
   });
 
@@ -81,16 +77,16 @@ export default function UserTable() {
     onSuccess: () => {
         queryClient.invalidateQueries(['admin-users']);
         showToast('success', 'User Unblocked', 'Access has been restored for this user.');
-        setConfirmModal({ show: false, user: null, type: null }); // Close modal
+        setConfirmModal({ show: false, user: null, type: null }); 
     },
     onError: (err) => {
         const msg = err.response?.data?.detail || 'Failed to unblock user';
         showToast('error', 'Action Failed', msg);
-        setConfirmModal({ show: false, user: null, type: null }); // Close modal
+        setConfirmModal({ show: false, user: null, type: null }); 
     }
   });
 
-  // Open the custom modal instead of window.confirm
+  // custom modal instead of window.confirm
   const handleToggleBlockClick = (user) => {
     setConfirmModal({
       show: true,
@@ -99,7 +95,7 @@ export default function UserTable() {
     });
   };
 
-  // Execute the action when user clicks "Yes" in modal
+  // Execute user clicks "Yes" 
   const handleConfirmAction = () => {
     if (!confirmModal.user) return;
     
@@ -110,7 +106,7 @@ export default function UserTable() {
     }
   };
 
-  // 3. Filtering logic
+  // Filtering 
   const filteredUsers = users.filter((user) => {
     const fName = user.first_name || '';
     const lName = user.last_name || '';
@@ -135,7 +131,7 @@ export default function UserTable() {
     return matchesSearch && matchesRole && matchesStatus;
   });
 
-  // 4. Pagination
+  // Pagination
   const totalPages = Math.ceil(filteredUsers.length / itemsPerPage);
   const paginatedUsers = filteredUsers.slice(
     (currentPage - 1) * itemsPerPage,
@@ -162,7 +158,7 @@ export default function UserTable() {
     return `${API_BASE_URL}/${cleanPath}`;
   };
 
-  // --- Render Toast UI ---
+
   const renderToast = () => {
     if (!toast) return null;
     let icon = toast.type === 'success' ? 'check' : toast.type === 'error' ? 'priority_high' : 'info';
@@ -192,7 +188,7 @@ export default function UserTable() {
     );
   };
 
-  // --- Render Confirmation Modal UI ---
+  // ---Confirmation Modal---
   const renderConfirmationModal = () => {
     if (!confirmModal.show) return null;
 
@@ -275,7 +271,6 @@ export default function UserTable() {
         </div> */}
       </header>
 
-      {/* Content */}
       <div className="flex-1 overflow-y-auto p-8 space-y-8">
         
         {/* Stats */}
@@ -291,7 +286,6 @@ export default function UserTable() {
                 <div className="p-2 bg-black/5 rounded-lg text-[#222222] group-hover:text-primary transition-colors">
                   <span className="material-symbols-outlined">{s.icon}</span>
                 </div>
-                {/* Stats Badge */}
                 <span className="text-xs font-bold text-green-600 bg-green-100 px-2 py-1 rounded-full">{s.change}</span>
               </div>
               <p className="text-[#222222]/70 text-sm font-medium">{s.label}</p>

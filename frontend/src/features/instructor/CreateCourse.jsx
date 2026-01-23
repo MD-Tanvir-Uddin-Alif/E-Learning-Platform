@@ -3,7 +3,6 @@ import { useQuery, useMutation } from '@tanstack/react-query';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { getAllCategories, createCourse, updateCourse } from '../../api/axios';
 
-// Base URL for image preview in edit mode
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000';
 
 const getImageUrl = (path) => {
@@ -25,11 +24,11 @@ export default function CreateCourse() {
   const [categoryId, setCategoryId] = useState('');
   const [price, setPrice] = useState('');
   const [description, setDescription] = useState('');
-  const [thumbnail, setThumbnail] = useState(null); // File object for new uploads
-  const [currentThumbnail, setCurrentThumbnail] = useState(null); // URL string for existing image
+  const [thumbnail, setThumbnail] = useState(null); 
+  const [currentThumbnail, setCurrentThumbnail] = useState(null);
   const [isPaid, setIsPaid] = useState(true);
 
-  // Populate form if editing
+  // if editing
   useEffect(() => {
     if (isEditMode && courseToEdit) {
       setTitle(courseToEdit.title || '');
@@ -42,7 +41,6 @@ export default function CreateCourse() {
     }
   }, [isEditMode, courseToEdit]);
 
-  // --- Toast State ---
   const [toast, setToast] = useState(null); 
   const showToast = (type, title, message) => {
     setToast({ type, title, message });
@@ -56,7 +54,7 @@ export default function CreateCourse() {
     queryFn: getAllCategories,
   });
 
-  // 2. Mutations
+  // Create Mutations
   const createMutation = useMutation({
     mutationFn: createCourse,
     onSuccess: (data) => {
@@ -76,7 +74,6 @@ export default function CreateCourse() {
     onSuccess: (data) => {
       showToast('success', 'Course Updated', 'Changes saved successfully.');
       setTimeout(() => {
-        // Navigate back to the details page of the specific course
         navigate(`/instructor/course/${data.id}`);
       }, 1500);
     },
@@ -100,15 +97,11 @@ export default function CreateCourse() {
     }
 
     const formData = new FormData();
-    // Only append fields if they are changed or required
     formData.append('title', title);
     
-    // Handle optional fields carefully
     if (subtitle) formData.append('sub_title', subtitle);
     formData.append('description', description);
     
-    // Explicitly convert boolean to string/int if needed by backend, 
-    // but usually standard FormData handles booleans or we send 'true'/'false'
     formData.append('is_paid', isPaid);
     
     if (isPaid && price) formData.append('price', price);
@@ -128,7 +121,6 @@ export default function CreateCourse() {
 
   const isLoading = createMutation.isPending || updateMutation.isPending;
 
-  // --- Render Toast ---
   const renderToast = () => {
     if (!toast) return null;
     const isError = toast.type === 'error';
@@ -170,7 +162,6 @@ export default function CreateCourse() {
       <div className="min-h-screen bg-[#FAF3E1] w-full flex items-center justify-center p-4 md:p-8 font-['Lexend'] text-[#222222]">
         {/* card */}
         <div className="w-full max-w-[640px] bg-white rounded-3xl shadow-xl p-8 md:p-12 relative overflow-hidden border border-[#F5E7C6]">
-          {/* header */}
           <div className="relative z-10 flex flex-col gap-2 mb-8">
             <h1 className="text-3xl font-bold tracking-tight text-[#222222]">
               {isEditMode ? 'Edit Course Details' : 'Create New Course'}

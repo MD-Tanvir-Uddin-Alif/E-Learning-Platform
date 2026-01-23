@@ -1,6 +1,5 @@
-// Profile.jsx
 import React, { useEffect, useState, useRef } from 'react';
-import axios from 'axios'; // Import axios for the preview version
+import axios from 'axios';
 
 
 import { getMyProfile, updateProfile, changePassword } from '../api/auth';
@@ -12,14 +11,12 @@ const getImageUrl = (path) => {
   if (!path) return "https://via.placeholder.com/150";
   if (path.startsWith('http')) return path;
   
-  // For local dev, you would use import.meta.env.VITE_API_URL
   const baseUrl = API_BASE_URL.endsWith('/') ? API_BASE_URL : `${API_BASE_URL}/`;
   const cleanPath = path.startsWith('/') ? path.substring(1) : path;
   return `${baseUrl}${cleanPath}`;
 };
 
 const Profile = () => {
-  // --- State Management ---
   const [user, setUser] = useState({
     first_name: '',
     last_name: '',
@@ -31,7 +28,7 @@ const Profile = () => {
   });
   
   const [passwords, setPasswords] = useState({
-    old_password: '', // Matches backend Pydantic model
+    old_password: '',
     new_password: ''
   });
 
@@ -42,20 +39,17 @@ const Profile = () => {
   const [previewImage, setPreviewImage] = useState(null);
 
   // Toast State
-  const [toast, setToast] = useState(null); // { type: 'success'|'error'|'info', title: '', message: '' }
+  const [toast, setToast] = useState(null); 
 
   const fileInputRef = useRef(null);
 
-  // --- Helpers ---
   const showToast = (type, title, message) => {
     setToast({ type, title, message });
-    // Auto-dismiss after 4 seconds
     setTimeout(() => setToast(null), 4000);
   };
 
   const closeToast = () => setToast(null);
 
-  // --- Fetch Data ---
   useEffect(() => {
     fetchProfile();
   }, []);
@@ -76,7 +70,6 @@ const Profile = () => {
     }
   };
 
-  // --- Handlers ---
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setUser((prev) => ({ ...prev, [name]: value }));
@@ -147,16 +140,14 @@ const Profile = () => {
     }
   };
 
-  // --- Render Toast Component ---
   const renderToast = () => {
     if (!toast) return null;
 
     let icon = '';
     let barColorClass = '';
-    // Determine icon and color based on type
     if (toast.type === 'success') {
       icon = 'check';
-      barColorClass = 'bg-[#FF6D1F]'; // Brand Orange
+      barColorClass = 'bg-[#FF6D1F]'; 
     } else if (toast.type === 'error') {
       icon = 'priority_high';
       barColorClass = 'bg-red-500'; 
@@ -169,18 +160,15 @@ const Profile = () => {
       <div className="fixed bottom-5 right-5 z-50 animate-[slideUp_0.3s_ease-out]">
         <div className="pointer-events-auto relative w-[320px] overflow-hidden rounded-xl bg-[#F5E7C6] shadow-xl transition-transform hover:-translate-y-1 duration-300 group border border-[#ead7cd]">
           <div className="flex items-start gap-3 p-4 pr-10">
-            {/* Icon Circle */}
             <div 
               className={`flex size-6 shrink-0 items-center justify-center rounded-full text-white ${toast.type === 'error' ? 'bg-red-500' : toast.type === 'info' ? 'bg-blue-500' : 'bg-[#FF6D1F]'}`}
             >
               <span className="material-symbols-outlined text-[16px] font-bold">{icon}</span>
             </div>
-            {/* Content */}
             <div className="flex flex-col gap-1">
               <h3 className="font-display text-sm font-semibold text-[#222222]">{toast.title}</h3>
               <p className="font-display text-xs text-[#222222]/80 leading-normal">{toast.message}</p>
             </div>
-            {/* Close Button */}
             <button 
               onClick={closeToast}
               className="absolute right-3 top-3 flex items-center justify-center text-[#222222]/40 transition-colors hover:text-[#FF6D1F]"
@@ -188,7 +176,6 @@ const Profile = () => {
               <span className="material-symbols-outlined text-[16px]">close</span>
             </button>
           </div>
-          {/* Progress Bar Decoration */}
           <div className="h-[3px] w-full bg-[#FAF3E1]">
             <div className={`h-full w-full ${barColorClass}`}></div>
           </div>
@@ -232,7 +219,6 @@ const Profile = () => {
       <main className="min-h-screen flex flex-col text-[#222222]" style={{ backgroundColor: '#FAF3E1' }}>
         <div className="flex-1 w-full max-w-5xl mx-auto p-6 md:p-8 flex flex-col gap-8">
           
-          {/* Header Card Section */}
           <div className="bg-white rounded-2xl shadow-sm border border-[#ead7cd] overflow-hidden">
             {/* Cover Photo Area */}
             <div className="relative h-48 md:h-60 w-full bg-gray-200 group">
@@ -250,7 +236,6 @@ const Profile = () => {
               </button>
             </div>
 
-            {/* Profile Info & Stats Wrapper */}
             <div className="px-6 md:px-10 pb-6 relative">
               <div className="flex flex-col md:flex-row gap-6 md:items-end -mt-16 md:-mt-12 mb-6">
                 
@@ -342,13 +327,12 @@ const Profile = () => {
             </div>
           </div>
 
-          {/* Form Content Section */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             {/* Left Column: Progress & Bio */}
             <div className="lg:col-span-2 flex flex-col gap-6">
               
               {/* Progress Card (Static) */}
-              <div className="bg-white p-6 rounded-2xl shadow-sm border border-[#ead7cd]">
+              {/* <div className="bg-white p-6 rounded-2xl shadow-sm border border-[#ead7cd]">
                 <div className="flex justify-between items-end mb-3">
                   <div>
                     <h3 className="text-lg font-bold text-[#222222]">Profile Completion</h3>
@@ -359,7 +343,7 @@ const Profile = () => {
                 <div className="h-3 w-full bg-[#F5E7C6] rounded-full overflow-hidden">
                   <div className="h-full bg-[#FF6D1F] rounded-full" style={{ width: "75%" }}></div>
                 </div>
-              </div>
+              </div> */}
 
               {/* Personal Info Form */}
               <div className="bg-white p-6 md:p-8 rounded-2xl shadow-sm border border-[#ead7cd]">
@@ -447,7 +431,6 @@ const Profile = () => {
               </div>
             </div>
 
-            {/* Right Column: Security & Actions */}
             <div className="flex flex-col gap-6">
               
               {/* Password Management */}

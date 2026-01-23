@@ -11,18 +11,18 @@ const SideBar = () => {
     retry: false,        
   });
 
-  // 1. Hide sidebar if loading, error (not logged in), no user data, or if role is just 'user'
+  // Hide sidebar 
   if (isLoading || isError || !user || user.role === 'user') return null;
 
   const role = user.role;
 
-  // 2. Define Common Items (Visible to both)
+  // Common Items 
   const baseItems = [
     { icon: 'dashboard', label: 'Dashboard', to: '/dashboard' },
     { icon: 'person', label: 'Profile', to: '/profile' },
   ];
 
-  // 3. Define Role-Specific Items
+  // Role-Specific Items
   const roleSpecificItems = {
     instructor: [
       // { icon: 'add_circle', label: 'Add Course', to: '/course/add' },
@@ -39,7 +39,7 @@ const SideBar = () => {
     ]
   };
 
-  // 4. Combine items based on current role
+  // Combine items
   const items = [...baseItems, ...(roleSpecificItems[role] || [])];
 
   return (
@@ -104,7 +104,6 @@ const SideBar = () => {
   );
 };
 
-// Reusable NavItem Component
 function NavItem({ icon, label, to }) {
   const baseClasses = 'flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 group relative overflow-hidden';
   const normalClasses = 'text-[#222222]/70 hover:bg-[#F5E7C6]/50 hover:text-[#222222]';
@@ -117,7 +116,6 @@ function NavItem({ icon, label, to }) {
     >
       {({ isActive }) => (
         <>
-          {/* Active Indicator Bar */}
           {isActive && (
             <div className="absolute left-0 top-1/2 -translate-y-1/2 h-8 w-1 bg-[#FF6D1F] rounded-r-full" />
           )}

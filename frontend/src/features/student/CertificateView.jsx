@@ -11,7 +11,7 @@ export default function CertificateView() {
   const componentRef = useRef();
   const [isDownloading, setIsDownloading] = useState(false);
 
-  // Fetch Certificate Data
+  // Fetch Certificate 
   const { data: cert, isLoading, isError, error } = useQuery({
     queryKey: ['certificate', courseId],
     queryFn: () => getCourseCertificate(courseId),
@@ -29,18 +29,16 @@ export default function CertificateView() {
         throw new Error('Certificate element not found');
       }
 
-      // Wait for fonts to load
       await document.fonts.ready;
       await new Promise(resolve => setTimeout(resolve, 300));
       
       console.log('Starting PDF generation...');
       
-      // Capture the certificate with html2canvas
       const canvas = await html2canvas(element, {
         scale: 3,
-        useCORS: false, // Changed to false
-        allowTaint: true, // Allow cross-origin images
-        logging: true, // Enable logging to see what's happening
+        useCORS: false, 
+        allowTaint: true,
+        logging: true, 
         backgroundColor: '#FAF3E1',
         width: 1120,
         height: 800,
@@ -57,20 +55,17 @@ export default function CertificateView() {
 
       console.log('Image data created');
       
-      // Create PDF in landscape orientation
       const pdf = new jsPDF({
         orientation: 'landscape',
         unit: 'mm',
         format: 'a4'
       });
 
-      // Calculate dimensions to fit A4 landscape (297mm x 210mm)
       const pdfWidth = pdf.internal.pageSize.getWidth();
       const pdfHeight = pdf.internal.pageSize.getHeight();
       
       console.log('PDF dimensions:', pdfWidth, 'x', pdfHeight);
       
-      // Add image to PDF
       pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight, undefined, 'FAST');
       
       // Download the PDF
@@ -104,7 +99,6 @@ export default function CertificateView() {
     );
   }
 
-  // Generate Certificate ID if not from backend
   const certId = `SF-${courseId}-${new Date(cert.completion_date).getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`;
   const formattedDate = new Date(cert.completion_date).toLocaleDateString('en-US', {
     month: 'long', day: 'numeric', year: 'numeric'
@@ -131,7 +125,6 @@ export default function CertificateView() {
           </button>
         </div>
 
-        {/* Main Content */}
         <main className="flex-grow flex flex-col items-center justify-center p-8 overflow-auto">
           
           {/* Certificate Container */}
@@ -146,24 +139,18 @@ export default function CertificateView() {
                 boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
               }}
             >
-              {/* Watermark - REMOVED TO PREVENT CORS ISSUES */}
-              {/* You can add this back if you host the image on your own server */}
-              
-              {/* Ornaments */}
+             
               <div className="absolute w-20 h-20 border-[#ff6d1f] top-10 left-10 border-t-2 border-l-2" />
               <div className="absolute w-20 h-20 border-[#ff6d1f] top-10 right-10 border-t-2 border-r-2" />
               <div className="absolute w-20 h-20 border-[#ff6d1f] bottom-10 left-10 border-b-2 border-l-2" />
               <div className="absolute w-20 h-20 border-[#ff6d1f] bottom-10 right-10 border-b-2 border-r-2" />
 
-              {/* Top Ribbon */}
               <div className="w-full bg-[#ff6d1f] py-8 flex justify-center items-center shadow-md relative z-10">
                 <h1 className="text-white text-[24px] font-bold tracking-[0.3em] uppercase">Certificate of Completion</h1>
               </div>
 
-              {/* Body */}
               <div className="flex-grow flex flex-col items-center justify-start pt-16 px-20 text-center relative z-10">
                 
-                {/* Seal */}
                 <div className="mb-10 relative">
                   <div className="w-[100px] h-[100px] bg-[#ff6d1f] rounded-full flex items-center justify-center shadow-lg relative overflow-hidden" style={{ border: '4px solid rgba(255, 215, 0, 0.3)' }}>
                     <div className="absolute inset-0 rounded-full" style={{ background: 'linear-gradient(to top right, transparent, rgba(255, 255, 255, 0.3), transparent)' }}></div>

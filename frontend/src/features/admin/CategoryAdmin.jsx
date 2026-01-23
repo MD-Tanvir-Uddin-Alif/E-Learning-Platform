@@ -8,13 +8,13 @@ export default function CategoryAdmin() {
   const queryClient = useQueryClient();
   const [showDelete, setShowDelete] = useState(null);
 
-  // 1. Fetch Categories (Real Data)
+  // Fetch Categories
   const { data: categories = [], isLoading, isError } = useQuery({
     queryKey: ['categories'],
     queryFn: getAllCategories,
   });
 
-  // 2. Delete Mutation
+  // Delete Mutation
   const deleteMutation = useMutation({
     mutationFn: deleteCategory,
     onSuccess: () => {
@@ -26,7 +26,7 @@ export default function CategoryAdmin() {
     }
   });
 
-  // 3. Handle Edit Navigation
+  // Edit Navigation
   const handleEdit = (category) => {
     navigate('/add-category', { state: { categoryToEdit: category } });
   };
@@ -70,7 +70,6 @@ export default function CategoryAdmin() {
                 <div className="size-12 rounded-2xl bg-[#FF6D1F]/10 flex items-center justify-center text-[#FF6D1F]">
                   <span className="material-symbols-outlined text-[28px]">{cat.icon || 'category'}</span>
                 </div>
-                {/* Action Buttons */}
                 <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
                   <button 
                     onClick={() => handleEdit(cat)}

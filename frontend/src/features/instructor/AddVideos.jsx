@@ -7,9 +7,9 @@ export default function AddVideos() {
   const location = useLocation();
   const navigate = useNavigate();
   const { courseId, courseTitle, existingVideos } = location.state || {};
-  const isManageMode = !!existingVideos; // If we have existing videos, we are in "Manage" mode
+  const isManageMode = !!existingVideos; 
 
-  // Redirect if no courseId
+  // Redirect 
   useEffect(() => {
     if (!courseId) {
       alert("No course selected. Please create a course first.");
@@ -17,29 +17,25 @@ export default function AddVideos() {
     }
   }, [courseId, navigate]);
 
-  // State for NEW videos (Files to upload)
   const [newVideoQueue, setNewVideoQueue] = useState([]);
   
-  // State for EXISTING videos (For renaming/reordering)
-  // We initialize this from location state
   const [existingQueue, setExistingQueue] = useState(existingVideos || []);
 
   const [toast, setToast] = useState(null);
 
-  // --- Helpers ---
   const showToast = (type, title, message) => {
     setToast({ type, title, message });
     setTimeout(() => setToast(null), 4000);
   };
   const closeToast = () => setToast(null);
 
-  // Handle NEW file input
+  // New file input
   const handleFileSelect = (e) => {
     if (e.target.files) {
       const startOrder = (existingQueue.length > 0 ? Math.max(...existingQueue.map(v=>v.order)) : 0) + newVideoQueue.length + 1;
 
       const newFiles = Array.from(e.target.files).map((file, index) => ({
-        tempId: Date.now() + index, // Local ID for UI
+        tempId: Date.now() + index, 
         file,
         title: file.name.split('.')[0],
         order: startOrder + index
@@ -48,23 +44,22 @@ export default function AddVideos() {
     }
   };
 
-  // Update Title (New Videos)
+  // Update Title 
   const updateNewTitle = (tempId, newTitle) => {
     setNewVideoQueue(prev => prev.map(v => v.tempId === tempId ? { ...v, title: newTitle } : v));
   };
-  // Remove (New Videos)
+  // Remove 
   const removeNewVideo = (tempId) => {
     setNewVideoQueue(prev => prev.filter(v => v.tempId !== tempId));
   };
 
-  // Update Title (Existing Videos)
+  // Update Title
   const updateExistingTitle = (id, newTitle) => {
     setExistingQueue(prev => prev.map(v => v.id === id ? { ...v, title: newTitle } : v));
   };
 
   // Mutations
   const uploadMutation = useMutation({
-    // If manage mode, use manageCourseVideos. Else use legacy addVideosToCourse.
     mutationFn: (formData) => {
         if (isManageMode) {
             return manageCourseVideos(courseId, formData);
@@ -86,16 +81,14 @@ export default function AddVideos() {
     const formData = new FormData();
 
     if (isManageMode) {
-        // 1. Prepare Updates for Existing Videos
-        // API expects 'video_updates' as JSON string of list [{id, title, order}]
+        
         const updates = existingQueue.map(v => ({
             id: v.id,
             title: v.title,
-            order: v.order // Assuming we aren't changing order in UI for now
+            order: v.order 
         }));
         formData.append('video_updates', JSON.stringify(updates));
 
-        // 2. Prepare New Videos
         // API expects 'new_files' (list of files) and 'new_files_data' (JSON list of metadata)
         if (newVideoQueue.length > 0) {
             const newMeta = newVideoQueue.map(v => ({

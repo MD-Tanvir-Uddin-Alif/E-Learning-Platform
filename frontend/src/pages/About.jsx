@@ -1,4 +1,3 @@
-// src/About.jsx
 import React from 'react';
 
 const About = () => (
@@ -8,9 +7,7 @@ const About = () => (
     <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
     <link href="https://fonts.googleapis.com/css2?family=Lexend:wght@100..900&family=Material+Symbols+Outlined:opsz,wght,FILL@20..48,100..700,0..1&display=swap" rel="stylesheet" />
 
-    {/* gradient background */}
     <div className="min-h-screen bg-gradient-to-b from-[#FAF3E1] to-[#F5E7C6] text-[#222222] font-['Lexend']">
-      {/* HERO */}
       <section className="relative px-6 lg:px-8 pt-20 pb-32 flex flex-col items-center text-center">
         <div className="max-w-4xl mx-auto space-y-6">
           <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold leading-tight tracking-tight">We help you forge new skills</h1>
@@ -28,7 +25,6 @@ const About = () => (
         <div className="absolute bottom-10 right-10 w-48 h-48 bg-white/40 rounded-full blur-3xl -z-10" />
       </section>
 
-      {/* CORE PRINCIPLES */}
       <section className="relative px-6 lg:px-8 -mt-20 mb-24 z-10">
         <div className="max-w-6xl mx-auto bg-white rounded-3xl p-8 md:p-12 shadow-xl shadow-black/5 ring-1 ring-black/5">
           <div className="text-center max-w-2xl mx-auto mb-8">
@@ -53,7 +49,6 @@ const About = () => (
         </div>
       </section>
 
-      {/* STATS */}
       <section className="w-full bg-[#F5E7C6] py-16 px-6 lg:px-8">
         <div className="max-w-6xl mx-auto">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center divide-x divide-[#FF6D1F]/10">
@@ -72,7 +67,6 @@ const About = () => (
         </div>
       </section>
 
-      {/* HOW IT WORKS */}
       <section className="py-24 px-6 lg:px-8">
         <div className="max-w-7xl mx-auto flex flex-col gap-12">
           <div className="text-center">
@@ -127,7 +121,6 @@ const About = () => (
                     )}
                   </div>
 
-                  {/* centre dot */}
                   <div className="absolute left-1/2 -translate-x-1/2 w-4 h-4 rounded-full bg-[#FF6D1F] border-4 border-[#FAF3E1] shadow-sm z-10" />
 
                   {/* RIGHT column: content on "right" side, hidden spacer on "left" side */}
@@ -147,7 +140,7 @@ const About = () => (
         </div>
       </section>
 
-      {/* FOOTER CTA */}
+      {/* FOOTER */}
       <footer className="bg-[#FF6D1F] pt-16 pb-12 px-6 lg:px-8 rounded-t-[32px] mt-12 text-center">
         <div className="max-w-3xl mx-auto flex flex-col items-center gap-8">
           <h2 className="text-[#FAF3E1] text-3xl md:text-4xl font-bold">Ready to start learning?</h2>

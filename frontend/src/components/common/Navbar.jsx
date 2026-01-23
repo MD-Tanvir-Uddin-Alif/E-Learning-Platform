@@ -70,7 +70,6 @@ const Navbar = () => {
     setShowDropdown(false);
   };
 
-  // Helper to build image URL safely
   const getImageUrl = (path) => {
     if (!path) return "https://via.placeholder.com/150";
     if (path.startsWith('http')) return path;
@@ -109,16 +108,13 @@ const Navbar = () => {
           {/* Conditional Rendering based on Login Status */}
           {isLoggedIn ? (
             <div className="relative" ref={dropdownRef}>
-              {/* User Profile Section */}
               <div className="flex items-center gap-3 pl-2 border-l border-black/5 dark:border-white/10">
-                {/* Role Badge - Dynamic */}
                 <div className="hidden xl:flex h-7 px-3 items-center justify-center rounded-full bg-[#FF6D1F]/10">
                   <span className="text-[#FF6D1F] text-xs font-bold uppercase tracking-wide">
                     {userInfo?.role || 'Student'}
                   </span>
                 </div>
                 
-                {/* Avatar Button - Dynamic */}
                 <button 
                   onClick={() => setShowDropdown(!showDropdown)}
                   className="size-10 rounded-full bg-white p-0.5 overflow-hidden ring-2 ring-transparent hover:ring-[#FF6D1F] transition-all group focus:outline-none"

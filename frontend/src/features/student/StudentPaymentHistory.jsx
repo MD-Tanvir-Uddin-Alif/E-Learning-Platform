@@ -29,7 +29,6 @@ export default function StudentPaymentHistory() {
     queryFn: getMyPaymentHistory,
   });
 
-  // Client-side Filtering (though API returns mostly completed)
   const filteredPayments = payments.filter(p => {
     if (activeTab === 'all') return true;
     if (activeTab === 'successful') return p.status === 'completed';
@@ -44,7 +43,6 @@ export default function StudentPaymentHistory() {
     <div className="layout-container flex flex-col font-['Lexend'] bg-[#f8f6f5] min-h-screen">
       <link href="https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600;700;800;900&family=Material+Symbols+Outlined:opsz,wght,FILL@20..48,100..700,0..1&display=swap" rel="stylesheet" />
 
-      {/* ----------  PAGE HEADER  ---------- */}
       <div
         className="w-full h-24 border-b flex items-center shadow-sm px-4 md:px-10"
         style={{ backgroundColor: '#F5E7C6', borderColor: 'rgba(0,0,0,.05)' }}
@@ -61,9 +59,7 @@ export default function StudentPaymentHistory() {
         </div>
       </div>
 
-      {/* ----------  MAIN CONTENT  ---------- */}
       <main className="max-w-4xl mx-auto w-full p-6 space-y-4">
-        {/* Tabs Navigation */}
         <div className="pb-4">
           <div className="flex border-b px-4 gap-8" style={{ borderColor: 'rgba(0,0,0,.05)' }}>
             {['all'].map((tab) => (

@@ -1,9 +1,8 @@
 import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation } from '@tanstack/react-query';
-import { getPublicCourseDetails, initiatePayment } from '../api/axios'; // Use correct import path
+import { getPublicCourseDetails, initiatePayment } from '../api/axios'; 
 
-// Base URL for images/media
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000';
 
 const getMediaUrl = (path) => {
@@ -17,7 +16,6 @@ export default function CourseDetail() {
   const { courseId } = useParams();
   const navigate = useNavigate();
   
-  // --- Toast State ---
   const [toast, setToast] = useState(null); 
   const showToast = (type, title, message) => {
     setToast({ type, title, message });
@@ -25,7 +23,6 @@ export default function CourseDetail() {
   };
   const closeToast = () => setToast(null);
 
-  // Fetch Public Course Details
   const { data: course, isLoading, isError } = useQuery({
     queryKey: ['public-course-details', courseId],
     queryFn: () => getPublicCourseDetails(courseId),
@@ -38,16 +35,13 @@ export default function CourseDetail() {
     onSuccess: (data) => {
       if (data.type === 'free_enrollment') {
         showToast('success', 'Enrolled Successfully', 'You have been enrolled in this free course.');
-        // Redirect to dashboard/my-courses after a short delay
         setTimeout(() => navigate('/student/course'), 1500);
       } else if (data.type === 'payment_redirect' && data.GatewayPageURL) {
-        // Redirect to SSLCommerz
         window.location.href = data.GatewayPageURL;
       }
     },
     onError: (err) => {
       const msg = err.response?.data?.detail || 'Failed to initiate enrollment';
-      // If user is already enrolled (400), maybe redirect them or just show error
       if (err.response?.status === 400 && msg.includes("already enrolled")) {
          showToast('info', 'Already Enrolled', 'Redirecting to your dashboard...');
          setTimeout(() => navigate('/student/course'), 1500);
@@ -59,9 +53,7 @@ export default function CourseDetail() {
 
   const handleEnroll = (e) => {
     e.preventDefault();
-    // Assuming auth check is handled by axios interceptor or user should be logged in
-    // You might want to check for token here if your public page allows guests
-    const token = localStorage.getItem('token'); // Or use auth hook
+    const token = localStorage.getItem('token'); 
     if (!token) {
       showToast('error', 'Login Required', 'Please log in to enroll in courses.');
       setTimeout(() => navigate('/login', { state: { from: `/courses/${courseId}` } }), 1500);
@@ -71,7 +63,6 @@ export default function CourseDetail() {
     paymentMutation.mutate();
   };
 
-  // --- Render Toast ---
   const renderToast = () => {
     if (!toast) return null;
     const isError = toast.type === 'error';
@@ -121,7 +112,7 @@ export default function CourseDetail() {
 
       {renderToast()}
 
-      {/* ------------------  HERO  ------------------ */}
+      {/* ---  HERO  ---*/}
       <div className="py-12" style={{ backgroundColor: '#F5E7C6' }}>
         <div className="mx-auto grid max-w-[1280px] gap-8 px-6 lg:grid-cols-[2fr_1fr]">
           {/* left */}
