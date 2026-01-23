@@ -156,6 +156,9 @@ export const getCourseCertificate = (courseId) =>
 export const submitCourseRating = (courseId, data) => 
   api.post(`/payment/courses/${courseId}/rate`, data).then((r) => r.data);
 
+// Get Student Payment History
+export const getMyPaymentHistory = () =>
+  api.get('/payment/payment-history').then((r) => r.data);
 
 
 

@@ -102,3 +102,16 @@ class CertificateResponse(BaseModel):
     course_name: str
     instructor_name: str
     completion_date: datetime
+
+
+class PaymentReceipt(BaseModel):
+    transaction_id: str
+    course_title: str
+    amount: float
+    currency: str
+    date: datetime
+    status: str
+    payment_method: Optional[str] = None
+
+    class Config:
+        orm_mode = True

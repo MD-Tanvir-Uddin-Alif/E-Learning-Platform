@@ -289,8 +289,8 @@ const Profile = () => {
                     <span className="material-symbols-outlined text-lg text-[#FF6D1F]">person</span>
                     <span className="text-sm font-medium">{user.role || 'User'}</span>
                     <span className="mx-2">•</span>
-                    <span className="material-symbols-outlined text-lg text-[#FF6D1F]">location_on</span>
-                    <span className="text-sm font-medium">San Francisco, CA</span>
+                    {/* <span className="material-symbols-outlined text-lg text-[#FF6D1F]">location_on</span>
+                    <span className="text-sm font-medium">San Francisco, CA</span> */}
                   </div>
                 </div>
 
@@ -331,6 +331,11 @@ const Profile = () => {
                 {user?.role !== 'user' &&(<Link to='/dashboard' className="flex items-center gap-2 border-b-[3px] border-transparent text-[#222222]/60 hover:text-[#FF6D1F] transition-colors pb-3 px-1" href="#">
                   <span className="material-symbols-outlined text-xl">dashboard</span>
                   <p className="text-sm font-medium tracking-wide">Dashboard</p>
+                </Link>
+                )}
+                {user?.role !== 'admin' &&(<Link to='/payment-history' className="flex items-center gap-2 border-b-[3px] border-transparent text-[#222222]/60 hover:text-[#FF6D1F] transition-colors pb-3 px-1" href="#">
+                  <span className="material-symbols-outlined text-xl">history</span>
+                  <p className="text-sm font-medium tracking-wide">Payment History</p>
                 </Link>
                 )}
               </div>

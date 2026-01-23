@@ -27,6 +27,7 @@ import VideoPlayer from './features/student/VideoPlayer';
 import CertificateView from './features/student/CertificateView';
 import RevenueDashboard from './features/admin/RevenueDashboard';
 import InstructorEarnings from './features/instructor/InstructorEarnings';
+import StudentPaymentHistory from './features/student/StudentPaymentHistory';
 
 const router = createBrowserRouter([
   /* navbar + footer */
@@ -46,6 +47,7 @@ const router = createBrowserRouter([
       { path: 'login', element: <Login/> },
       { path: 'verify-email', element: <EmailVerification/> },
       { path: 'profile', element: <ProtectedRoute><Profile/></ProtectedRoute> },
+      { path: 'payment-history', element: <ProtectedRoute><StudentPaymentHistory/></ProtectedRoute>},
       { path: 'courses', element: <CourseCatalog />},
       { path: 'courses/:courseId', element: <CourseDetails />},
       { path: 'student/course', element: <ProtectedRoute><StudentCourseDashboard /></ProtectedRoute>},

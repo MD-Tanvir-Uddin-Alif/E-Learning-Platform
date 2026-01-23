@@ -17,6 +17,7 @@ from models.course_model import CourseModel
 from .auth_route import get_current_user
 from models.user_models import UserModel
 from database_config import get_db
+from schemas.course_schema import PaymentReceipt
 
 router = APIRouter(tags=["Payment"])
 
@@ -151,7 +152,7 @@ def initiate_payment(
 @router.post("/success/{transaction_id}")
 async def payment_success(
     transaction_id: str,
-    request: Request, # <--- Added Request object to read Form Data
+    request: Request, 
     db: Session = Depends(get_db)
 ):
     """Handle successful payment"""
@@ -161,26 +162,22 @@ async def payment_success(
     if not payment:
         raise HTTPException(status_code=404, detail="Payment not found")
     
-    # 2. Extract val_id from SSLCommerz POST data
-    # This is critical: SSLCommerz sends 'val_id' in the body, not query params
+    
     try:
         form_data = await request.form()
         val_id = form_data.get('val_id')
     except Exception:
         val_id = None
     
-    # If val_id is missing, we can't validate. 
-    # (Note: In Sandbox sometimes simply checking status works, but for production val_id is required)
+    
     if not val_id:
-        # Fallback for some sandbox scenarios where val_id might be missing or different
-        # But strictly we should fail here.
+        
         payment.status = "failed"
         db.commit()
         raise HTTPException(status_code=400, detail="Validation ID missing from payment gateway response")
 
-    # 3. Validate payment with SSLCommerz using val_id
     validation_params = {
-        'val_id': val_id, # <--- Use the extracted val_id
+        'val_id': val_id, 
         'store_id': SSLCOMMERZ_STORE_ID,
         'store_passwd': SSLCOMMERZ_STORE_PASSWORD,
         'format': 'json'
@@ -384,3 +381,38 @@ def get_course_rating_summary(
         "total_ratings": total_ratings,
         "rating_distribution": distribution
     }
+
+
+
+# ==========================================
+# Payment History
+# ==========================================
+@router.get("/payment-history", response_model=List[PaymentReceipt])
+def get_my_payment_history(
+    db: Session = Depends(get_db),
+    current_user: UserModel = Depends(get_current_user)
+):
+    """
+    Get list of all successful payments (Receipts) for the logged-in user.
+    """
+    payments = db.query(PaymentModel).filter(
+        PaymentModel.user_id == current_user.id,
+        PaymentModel.status == "completed"
+    ).order_by(PaymentModel.payment_date.desc()).all()
+
+    receipts = []
+    for payment in payments:
+        # Get course title safely
+        course_title = payment.course.title if payment.course else "Unknown Course"
+        
+        receipts.append({
+            "transaction_id": payment.transaction_id,
+            "course_title": course_title,
+            "amount": payment.amount,
+            "currency": payment.currency,
+            "date": payment.payment_date,
+            "status": payment.status,
+            "payment_method": payment.payment_method or "Online Payment"
+        })
+        
+    return receipts
