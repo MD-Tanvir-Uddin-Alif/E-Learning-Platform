@@ -78,6 +78,16 @@ def update_category(
     category = db.query(CategoryModel).filter(CategoryModel.id == category_id).first()
     if not category:
         raise HTTPException(404, "Category not found")
+    
+    linked_courses_count = db.query(CourseModel).filter(
+        CourseModel.category_id == category_id
+    ).count()
+
+    if linked_courses_count > 0:
+        raise HTTPException(
+            status_code=400, 
+            detail=f"Cannot update this category. It is currently assigned to {linked_courses_count} course(s). Please reassign those courses first."
+        )
 
     category.name = category_data.name
     category.description = category_data.description
@@ -103,6 +113,16 @@ def delete_category(
     category = db.query(CategoryModel).filter(CategoryModel.id == category_id).first()
     if not category:
         raise HTTPException(404, "Category not found")
+    
+    linked_courses_count = db.query(CourseModel).filter(
+        CourseModel.category_id == category_id
+    ).count()
+
+    if linked_courses_count > 0:
+        raise HTTPException(
+            status_code=400, 
+            detail=f"Cannot delete this category. It is currently assigned to {linked_courses_count} course(s). Please reassign or delete those courses first."
+        )
 
     db.delete(category)
     db.commit()
