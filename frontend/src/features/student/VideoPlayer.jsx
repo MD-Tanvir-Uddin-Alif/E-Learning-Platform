@@ -377,9 +377,9 @@ export default function VideoPlayer() {
                 <h1 className="text-2xl font-bold mb-2" style={{ color: '#222222' }}>
                   {currentVideo?.title || 'Video Title'}
                 </h1>
-                <p className="leading-relaxed max-w-2xl" style={{ color: 'rgba(34,34,34,.7)' }}>
+                {/* <p className="leading-relaxed max-w-2xl" style={{ color: 'rgba(34,34,34,.7)' }}>
                   {courseData.description}
-                </p>
+                </p> */}
               </div>
 
               {/* Action Panel */}
