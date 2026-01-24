@@ -5,7 +5,7 @@ import { getInstructorEarnings } from '../../api/axios';
 const formatCurrency = (amount) => {
   return new Intl.NumberFormat('en-US', {
     style: 'currency',
-    currency: 'USD',
+    currency: 'BDT',
   }).format(amount || 0);
 };
 
