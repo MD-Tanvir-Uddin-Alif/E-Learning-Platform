@@ -171,7 +171,7 @@ def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(
 
 
 # -------------------------------
-# NEW ROUTE 1: Change Password (Authenticated)
+# Change Password (Authenticated)
 # -------------------------------
 @router.post("/change-password")
 def change_password(
@@ -179,11 +179,9 @@ def change_password(
     db: Session = Depends(get_db),
     current_user: UserModel = Depends(get_current_user)
 ):
-    # 1. Verify old password
     if not verify_password(data.old_password, current_user.password):
         raise HTTPException(status_code=400, detail="Incorrect old password")
     
-    # 2. Hash new password and update
     current_user.password = hash_password(data.new_password)
     db.commit()
     
@@ -192,26 +190,22 @@ def change_password(
 
 
 # -------------------------------
-# NEW ROUTE 2: Forgot Password (Unauthenticated)
+# NEW ROUTE 2: Forgot Password 
 # -------------------------------
 @router.post("/forgot-password")
 async def forgot_password(
     data: ForgotPasswordModel,
     db: Session = Depends(get_db)
 ):
-    # 1. Find user
     user = db.query(UserModel).filter(UserModel.email == data.email).first()
     if not user:
-        # Security: Don't reveal if email exists or not
         return {"message": "If this email is registered, you will receive a reset link."}
     
-    # 2. Generate Reset Token (Reusing verification fields for simplicity)
     reset_token = str(uuid4())
     user.verification_token = reset_token
-    user.token_expiry = datetime.utcnow() + timedelta(hours=1) # Token valid for 1 hour
+    user.token_expiry = datetime.utcnow() + timedelta(hours=1)
     db.commit()
     
-    # 3. Send Email
     try:
         await send_reset_password_email(user.email, reset_token)
     except Exception as e:
@@ -221,27 +215,23 @@ async def forgot_password(
 
 
 # -------------------------------
-# NEW ROUTE 3: Reset Password (Unauthenticated)
+# NEW ROUTE 3: Reset Password 
 # -------------------------------
 @router.post("/reset-password")
 def reset_password(
     data: ResetPasswordModel,
     db: Session = Depends(get_db)
 ):
-    # 1. Find user by token
     user = db.query(UserModel).filter(UserModel.verification_token == data.token).first()
     
     if not user:
         raise HTTPException(status_code=400, detail="Invalid or expired token")
         
-    # 2. Check Expiry
     if user.token_expiry and datetime.utcnow() > user.token_expiry:
         raise HTTPException(status_code=400, detail="Token has expired")
         
-    # 3. Set New Password
     user.password = hash_password(data.new_password)
     
-    # 4. Clear token
     user.verification_token = None
     user.token_expiry = None
     db.commit()

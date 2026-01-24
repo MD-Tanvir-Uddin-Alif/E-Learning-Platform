@@ -56,7 +56,6 @@ async def update_profile(
     email: Optional[str] = Form(None),
     headline: Optional[str] = Form(None),
     bio: Optional[str] = Form(None),
-    # -----------------------
     profile_image: UploadFile = File(None),
     db: Session = Depends(get_db),
     current_user: UserModel = Depends(get_current_user)
@@ -113,9 +112,6 @@ def get_my_enrollments(
     db: Session = Depends(get_db),
     current_user: UserModel = Depends(get_current_user)
 ):
-    """
-    Fetch all courses the user has enrolled in.
-    """
     enrollments = db.query(
         EnrollmentModel,
         CourseModel,
@@ -137,7 +133,6 @@ def get_my_enrollments(
         
         progress = 0.0
         if total_videos > 0:
-            # 2. Get count of videos marked as watched by this user for this course
             watched_count = db.query(VideoProgressModel).filter(
                 VideoProgressModel.user_id == current_user.id,
                 VideoProgressModel.course_id == course.id,
@@ -167,10 +162,6 @@ def get_enrolled_course_details(
     db: Session = Depends(get_db),
     current_user: UserModel = Depends(get_current_user)
 ):
-    """
-    Fetch full details + Videos for a course ONLY IF user is enrolled.
-    """
-    # 1. Verify Enrollment
     enrollment = db.query(EnrollmentModel).filter(
         EnrollmentModel.user_id == current_user.id,
         EnrollmentModel.course_id == course_id
@@ -179,12 +170,10 @@ def get_enrolled_course_details(
     if not enrollment:
         raise HTTPException(status_code=403, detail="You are not enrolled in this course.")
 
-    # 2. Fetch Course Details
     course = db.query(CourseModel).filter(CourseModel.id == course_id).first()
     if not course:
         raise HTTPException(status_code=404, detail="Course not found")
 
-    # 3. Fetch Videos (Sorted)
     videos = db.query(VideoModel).filter(
         VideoModel.course_id == course_id
     ).order_by(VideoModel.order).all()
@@ -219,10 +208,6 @@ def get_course_certificate(
     db: Session = Depends(get_db),
     current_user: UserModel = Depends(get_current_user)
 ):
-    """
-    Validate completion and return certificate data.
-    """
-    # 1. Check Enrollment
     enrollment = db.query(EnrollmentModel).filter(
         EnrollmentModel.user_id == current_user.id,
         EnrollmentModel.course_id == course_id
@@ -231,12 +216,10 @@ def get_course_certificate(
     if not enrollment:
         raise HTTPException(status_code=403, detail="You are not enrolled in this course.")
 
-    # 2. Check Course Existence
     course = db.query(CourseModel).filter(CourseModel.id == course_id).first()
     if not course:
         raise HTTPException(status_code=404, detail="Course not found")
 
-    # 3. Check Completion (All videos watched?)
     total_videos = db.query(VideoModel).filter(VideoModel.course_id == course_id).count()
     
     if total_videos == 0:
@@ -254,12 +237,9 @@ def get_course_certificate(
             detail=f"You have watched {len(watched_videos)}/{total_videos} videos. Complete all videos to get the certificate."
         )
 
-    # 4. Get Completion Date (The date of the last watched video)
-    # Sort by watch_date descending to get the latest one
     last_watched = sorted(watched_videos, key=lambda x: x.watch_date, reverse=True)[0]
     completion_date = last_watched.watch_date
 
-    # 5. Get Instructor Name
     instructor = db.query(UserModel).filter(UserModel.id == course.instructor_id).first()
     instructor_name = f"{instructor.first_name} {instructor.last_name}" if instructor else "Unknown Instructor"
 

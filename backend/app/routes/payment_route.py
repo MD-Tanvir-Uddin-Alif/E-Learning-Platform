@@ -50,12 +50,10 @@ def initiate_payment(
             status_code=403, 
             detail="Admins cannot purchase courses. Please register as a student to buy courses."
         )
-    # 1. Check if course exists
     course = db.query(CourseModel).filter(CourseModel.id == course_id).first()
     if not course:
         raise HTTPException(status_code=404, detail="Course not found")
 
-    # 2. Check if user is already enrolled
     existing_enrollment = db.query(EnrollmentModel).filter(
         EnrollmentModel.user_id == current_user.id,
         EnrollmentModel.course_id == course_id
@@ -68,7 +66,6 @@ def initiate_payment(
     # SCENARIO A: Free Course (Direct Enrollment)
     # ======================================================
     if not course.is_paid:
-        # Create enrollment record immediately
         new_enrollment = EnrollmentModel(
             user_id=current_user.id,
             course_id=course_id,
@@ -87,10 +84,9 @@ def initiate_payment(
     # SCENARIO B: Paid Course (SSLCommerz Payment)
     # ======================================================
     
-    # Generate unique transaction ID
+    # unique transaction ID
     transaction_id = str(uuid.uuid4())
     
-    # Create payment record
     payment = PaymentModel(
         user_id=current_user.id,
         course_id=course_id,
@@ -101,7 +97,6 @@ def initiate_payment(
     db.add(payment)
     db.commit()
     
-    # Prepare SSLCommerz payload
     payload = {
         'store_id': SSLCOMMERZ_STORE_ID,
         'store_passwd': SSLCOMMERZ_STORE_PASSWORD,
@@ -143,21 +138,12 @@ def initiate_payment(
         raise HTTPException(status_code=500, detail=f"Payment gateway error: {str(e)}")
 
 
-
-
-
-
-
-
 @router.post("/success/{transaction_id}")
 async def payment_success(
     transaction_id: str,
     request: Request, 
     db: Session = Depends(get_db)
 ):
-    """Handle successful payment"""
-    
-    # 1. Find local payment record
     payment = db.query(PaymentModel).filter(PaymentModel.transaction_id == transaction_id).first()
     if not payment:
         raise HTTPException(status_code=404, detail="Payment not found")
@@ -188,11 +174,9 @@ async def payment_success(
         validation_data = response.json()
         
         if validation_data.get('status') == 'VALID' or validation_data.get('status') == 'VALIDATED':
-            # Update payment status
             payment.status = "completed"
             payment.sslcommerz_response = json.dumps(validation_data)
             
-            # Create enrollment if not already exists
             existing_enrollment = db.query(EnrollmentModel).filter(
                 EnrollmentModel.user_id == payment.user_id,
                 EnrollmentModel.course_id == payment.course_id
@@ -218,10 +202,6 @@ async def payment_success(
             
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Payment validation error: {str(e)}")
-
-    
-
-
 
 
 @router.post("/fail/{transaction_id}")
@@ -265,29 +245,25 @@ def payment_ipn(
     if not payment:
         raise HTTPException(status_code=404, detail="Payment not found")
     
-    # Process IPN notification (implement based on SSLCommerz documentation)
     return {"status": "received"}
 
 
 
 # ==========================================
-# RATING ROUTES (UPDATED)
+# RATING ROUTES 
 # ==========================================
 
 @router.post("/courses/{course_id}/rate")
 def add_rating(
     course_id: int,
-    rating_data: RatingSchema, # <--- CHANGED: Now accepts JSON Body
+    rating_data: RatingSchema, 
     db: Session = Depends(get_db),
     current_user: UserModel = Depends(get_current_user)
 ):
-    """Add rating - Enforces Course Completion Rule"""
     
-    # Extract data from schema
     rating = rating_data.rating
     comment = rating_data.comment
 
-    # 1. Check Enrollment
     enrollment = db.query(EnrollmentModel).filter(
         EnrollmentModel.user_id == current_user.id,
         EnrollmentModel.course_id == course_id
@@ -296,7 +272,6 @@ def add_rating(
     if not enrollment:
         raise HTTPException(status_code=403, detail="You must be enrolled in this course to rate it")
     
-    # 2. Check Previous Rating
     existing_rating = db.query(RatingModel).filter(
         RatingModel.user_id == current_user.id,
         RatingModel.course_id == course_id
@@ -305,18 +280,15 @@ def add_rating(
     if existing_rating:
         raise HTTPException(status_code=400, detail="You have already rated this course")
 
-    # 3. CRITICAL: Enforce Completion Check
     if not is_course_completed(db, current_user.id, course_id):
          raise HTTPException(
              status_code=403, 
              detail="You must complete 100% of the course videos before rating."
          )
     
-    # 4. Validate Rating
     if not 1 <= rating <= 5:
         raise HTTPException(status_code=400, detail="Rating must be between 1 and 5")
     
-    # 5. Save Rating
     new_rating = RatingModel(
         user_id=current_user.id,
         course_id=course_id,
@@ -352,7 +324,7 @@ def get_course_rating_summary(
     course_id: int,
     db: Session = Depends(get_db)
 ):
-    """Get rating summary for a course"""
+
     from sqlalchemy import func
     
     ratings = db.query(RatingModel).filter(RatingModel.course_id == course_id).all()
@@ -392,9 +364,6 @@ def get_my_payment_history(
     db: Session = Depends(get_db),
     current_user: UserModel = Depends(get_current_user)
 ):
-    """
-    Get list of all successful payments (Receipts) for the logged-in user.
-    """
     payments = db.query(PaymentModel).filter(
         PaymentModel.user_id == current_user.id,
         PaymentModel.status == "completed"
@@ -402,7 +371,7 @@ def get_my_payment_history(
 
     receipts = []
     for payment in payments:
-        # Get course title safely
+        
         course_title = payment.course.title if payment.course else "Unknown Course"
         
         receipts.append({

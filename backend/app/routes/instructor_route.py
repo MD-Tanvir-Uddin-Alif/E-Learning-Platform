@@ -96,10 +96,6 @@ def get_my_courses(
     user = Depends(instructor_required),
     db: Session = Depends(get_db)
 ):
-    """
-    Fetch all courses created by the logged-in instructor.
-    Returns: ID, Title, SubTitle, Image, Price, Paid Status
-    """
     courses = db.query(CourseModel).filter(
         CourseModel.instructor_id == user.id
     ).all()
@@ -116,10 +112,6 @@ def get_course_details(
     user = Depends(instructor_required),
     db: Session = Depends(get_db)
 ):
-    """
-    Fetch details of a specific course + its videos.
-    Only allows access if the course belongs to the logged-in instructor.
-    """
     course = db.query(CourseModel).filter(
         CourseModel.id == course_id,
         CourseModel.instructor_id == user.id
@@ -127,9 +119,6 @@ def get_course_details(
 
     if not course:
         raise HTTPException(status_code=404, detail="Course not found or unauthorized")
-    
-    # SQLAlchemy relationship 'videos' will be automatically populated 
-    # and validated by Pydantic 'CourseDetailResponse'
     return course
 
 
@@ -152,11 +141,7 @@ def update_course(
     user = Depends(instructor_required),
     db: Session = Depends(get_db)
 ):
-    """
-    Update any field of a course.
-    Send only the fields you want to update.
-    """
-    # 1. Find the course
+    
     course = db.query(CourseModel).filter(
         CourseModel.id == course_id,
         CourseModel.instructor_id == user.id
@@ -171,7 +156,6 @@ def update_course(
             detail="Cannot update a published course. Unpublish it first to make changes."
         )
 
-    # 2. Update fields if provided
     if title is not None:
         course.title = title
     
@@ -181,45 +165,33 @@ def update_course(
     if description is not None:
         course.description = description
 
-    # --- PRICE & PAID LOGIC ---
     if is_paid is not None:
-        # If explicitly setting to PAID (True)
         if is_paid is True:
-            # Check if price is provided in this request
             if price is not None:
                 if price <= 0:
                     raise HTTPException(status_code=400, detail="Price must be greater than 0 for a paid course.")
-            # If price is NOT provided, check if existing price is valid
             elif course.price is None or course.price <= 0:
                 raise HTTPException(status_code=400, detail="You must provide a valid price when setting a course to Paid.")
         
-        # Apply change
         course.is_paid = is_paid
         
-        # If switching to Free, force price to 0
         if is_paid is False:
             course.price = 0.0
 
-    # Update Price
     if price is not None:
-        # Only update price if the course is Paid (or becoming Paid)
         if course.is_paid:
             if price <= 0:
                 raise HTTPException(status_code=400, detail="Price must be greater than 0.")
             course.price = price
         elif is_paid is None:
-            # User sent a price, but didn't send is_paid, and the course is currently Free.
             raise HTTPException(status_code=400, detail="Cannot set a price for a Free course. Set is_paid=True.")
-    # --------------------------
 
     if category_id is not None:
-        # Validate new category
         cat_exists = db.query(CategoryModel).filter(CategoryModel.id == category_id).first()
         if not cat_exists:
             raise HTTPException(404, "Category not found")
         course.category_id = category_id
 
-    # 3. Handle Image Update
     if image:
         ext = image.filename.split(".")[-1]
         filename = f"{uuid4()}.{ext}"
@@ -245,9 +217,7 @@ def publish_course(
     user = Depends(instructor_required),
     db: Session = Depends(get_db)
 ):
-    """
-    Publish a course to make it visible to students.
-    """
+    
     course = db.query(CourseModel).filter(
         CourseModel.id == course_id,
         CourseModel.instructor_id == user.id
@@ -256,7 +226,7 @@ def publish_course(
     if not course:
         raise HTTPException(status_code=404, detail="Course not found or unauthorized")
     
-    if publish_status is False: # If trying to UNPUBLISH
+    if publish_status is False:
         enrolled_count = db.query(EnrollmentModel).filter(
             EnrollmentModel.course_id == course_id
         ).count()
@@ -267,7 +237,6 @@ def publish_course(
                 detail="Cannot unpublish this course because students are already enrolled."
             )
 
-    # Optional: Check if course has content before publishing
     if publish_status is True:
         video_count = db.query(VideoModel).filter(VideoModel.course_id == course_id).count()
         if video_count == 0:
@@ -291,7 +260,6 @@ def add_video(
     user = Depends(instructor_required),
     db: Session = Depends(get_db)
 ):
-    # Validate course ownership
     course = db.query(CourseModel).filter(
         CourseModel.id == course_id,
         CourseModel.instructor_id == user.id
@@ -348,14 +316,11 @@ def add_video(
 @router.put("/courses/{course_id}/manage-videos")
 def manage_course_videos(
     course_id: int,
-    # 1. Update Existing Metadata (Title/Order)
     video_updates: Optional[str] = Form(None),
     
-    # 2. Add New Videos
     new_files: List[UploadFile] = File(None),
     new_files_data: Optional[str] = Form(None),
     
-    # 3. Replace Existing Video Files
     replace_files: List[UploadFile] = File(None),
     replace_files_data: Optional[str] = Form(None),
     
@@ -364,7 +329,6 @@ def manage_course_videos(
 ):
     import json
 
-    # --- 1. Verify Course Ownership ---
     course = db.query(CourseModel).filter(
         CourseModel.id == course_id,
         CourseModel.instructor_id == user.id
@@ -376,7 +340,6 @@ def manage_course_videos(
     if course.is_published:
         raise HTTPException(status_code=400, detail="Cannot edit video details of a published course. Unpublish first.")
 
-    # --- 2. Process Existing Video Updates (Title/Order) ---
     if video_updates:
         try:
             updates_list = json.loads(video_updates) # List[Dict]
@@ -385,7 +348,6 @@ def manage_course_videos(
                  
             for item in updates_list:
                 vid_id = item.get("id")
-                # Find the video
                 video = db.query(VideoModel).filter(
                     VideoModel.id == vid_id, 
                     VideoModel.course_id == course_id
@@ -399,7 +361,6 @@ def manage_course_videos(
         except json.JSONDecodeError:
             raise HTTPException(400, "Invalid JSON format in video_updates. Ensure you are using double quotes for keys and string values.")
 
-    # --- 3. Process New Video Uploads ---
     if new_files:
         if not new_files_data:
             raise HTTPException(400, "new_files_data JSON is required when uploading new files")
@@ -430,7 +391,6 @@ def manage_course_videos(
             )
             db.add(new_video)
 
-    # --- 4. Process Video Replacements ---
     if replace_files:
         if not replace_files_data:
             raise HTTPException(400, "replace_files_data JSON is required when replacing files")
@@ -468,35 +428,26 @@ def manage_course_videos(
                 
                 target_video.video_url = file_path
 
-    # --- 5. VALIDATION: Check for Duplicate Orders ---
-    # We use flush() to sync Python objects to the DB transaction without committing yet.
-    # This allows us to query the 'future' state of the DB.
     db.flush()
 
-    # Get all videos for this course (including the ones we just modified/added)
     all_videos_check = db.query(VideoModel).filter(
         VideoModel.course_id == course_id
     ).all()
 
-    # Extract all order numbers
     all_orders = [v.order for v in all_videos_check]
 
-    # Check if there are duplicates
-    # We use Counter to find exactly which numbers appear more than once
     order_counts = Counter(all_orders)
     duplicates = [order for order, count in order_counts.items() if count > 1]
 
     if duplicates:
-        db.rollback() # Undo everything since the request started
+        db.rollback()
         raise HTTPException(
             status_code=400, 
             detail=f"Duplicate video orders found: {duplicates}. Every video must have a unique order number."
         )
 
-    # --- 6. Commit & Return ---
     db.commit()
     
-    # Return sorted list
     final_videos = db.query(VideoModel).filter(
         VideoModel.course_id == course_id
     ).order_by(VideoModel.order).all()
@@ -563,7 +514,6 @@ def delete_videos(
 
 
 
-
 # -------------------------------
 # DELETE COURSE
 # -------------------------------
@@ -573,10 +523,6 @@ def delete_course(
     user = Depends(instructor_required),
     db: Session = Depends(get_db)
 ):
-    """
-    Delete a course.
-    Restricted: Cannot delete if the course is Published.
-    """
     course = db.query(CourseModel).filter(
         CourseModel.id == course_id,
         CourseModel.instructor_id == user.id
@@ -623,14 +569,7 @@ def get_instructor_earnings(
     db: Session = Depends(get_db),
     user: UserModel = Depends(instructor_required)
 ):
-    """
-    Instructor Dashboard:
-    - Total Sales (100% of course price)
-    - Net Earnings (75% share)
-    - List of Sales
-    """
     
-    # 1. Find all courses owned by this instructor
     my_courses = db.query(CourseModel).filter(
         CourseModel.instructor_id == user.id
     ).all()
@@ -645,7 +584,6 @@ def get_instructor_earnings(
             "sales_history": []
         }
 
-    # 2. Find completed payments for these courses
     payments = db.query(PaymentModel).filter(
         PaymentModel.course_id.in_(my_course_ids),
         PaymentModel.status == "completed"
@@ -657,10 +595,8 @@ def get_instructor_earnings(
     for p in payments:
         total_sales += p.amount
         
-        # Find course title from cached list or DB
         course_title = next((c.title for c in my_courses if c.id == p.course_id), "Unknown")
         
-        # Find student name
         student = db.query(UserModel).filter(UserModel.id == p.user_id).first()
         student_name = f"{student.first_name} {student.last_name}" if student else "Unknown Student"
 
@@ -673,7 +609,6 @@ def get_instructor_earnings(
             "date": p.payment_date
         })
 
-    # 3. Calculate 75% Share
     net_earnings = total_sales * 0.75
 
     return {

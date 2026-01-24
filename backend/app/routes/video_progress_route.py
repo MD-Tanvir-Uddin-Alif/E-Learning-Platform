@@ -16,7 +16,9 @@ from database_config import get_db
 
 router = APIRouter(tags=["Video Progress"])
 
-
+#----------------------------
+# Video Watched
+#----------------------------
 @router.post("/videos/{video_id}/progress")
 def update_video_progress(
     video_id: int,
@@ -24,14 +26,11 @@ def update_video_progress(
     db: Session = Depends(get_db),
     current_user: UserModel = Depends(get_current_user)
 ):
-    """Update video watch progress for current user"""
     
-    # Get video info
     video = db.query(VideoModel).filter(VideoModel.id == video_id).first()
     if not video:
         raise HTTPException(status_code=404, detail="Video not found")
     
-    # Check enrollment
     enrollment = db.query(EnrollmentModel).filter(
         EnrollmentModel.user_id == current_user.id,
         EnrollmentModel.course_id == video.course_id
@@ -40,7 +39,6 @@ def update_video_progress(
     if not enrollment:
         raise HTTPException(status_code=403, detail="You must be enrolled in this course")
     
-    # Update or Create Progress
     progress = db.query(VideoProgressModel).filter(
         VideoProgressModel.user_id == current_user.id,
         VideoProgressModel.video_id == video_id
@@ -52,7 +50,7 @@ def update_video_progress(
     else:
         progress = VideoProgressModel(
             user_id=current_user.id,
-            course_id=video.course_id, # Storing course_id helps with faster queries later
+            course_id=video.course_id, 
             video_id=video_id,
             watched=watched,
             watch_date=func.now()
@@ -63,15 +61,16 @@ def update_video_progress(
     
     return {"status": "success", "watched": watched}
 
+
+#----------------------------
+# Course Progesss
+#----------------------------
 @router.get("/courses/{course_id}/progress")
 def get_course_progress(
     course_id: int,
     db: Session = Depends(get_db),
     current_user: UserModel = Depends(get_current_user)
 ):
-    """Get detailed progress for a course"""
-    
-    # Check enrollment
     enrollment = db.query(EnrollmentModel).filter(
         EnrollmentModel.user_id == current_user.id,
         EnrollmentModel.course_id == course_id
@@ -82,13 +81,11 @@ def get_course_progress(
     
     videos = db.query(VideoModel).filter(VideoModel.course_id == course_id).order_by(VideoModel.order).all()
     
-    # Get watched status efficiently
     progress_records = db.query(VideoProgressModel).filter(
         VideoProgressModel.user_id == current_user.id,
         VideoProgressModel.course_id == course_id
     ).all()
     
-    # Convert to a set of watched video IDs for fast lookup
     watched_video_ids = {p.video_id for p in progress_records if p.watched}
     
     total = len(videos)
@@ -113,15 +110,16 @@ def get_course_progress(
         "videos": video_list
     }
 
+
+#----------------------------
+# Create Rating
+#----------------------------
 @router.get("/courses/{course_id}/can-rate")
 def can_rate_course(
     course_id: int,
     db: Session = Depends(get_db),
     current_user: UserModel = Depends(get_current_user)
 ):
-    """Check if user is allowed to rate"""
-    
-    # 1. Enrolled?
     enrollment = db.query(EnrollmentModel).filter(
         EnrollmentModel.user_id == current_user.id,
         EnrollmentModel.course_id == course_id
@@ -129,15 +127,12 @@ def can_rate_course(
     if not enrollment:
         return {"can_rate": False, "reason": "Not enrolled"}
 
-    # 2. Already Rated?
     rating = db.query(RatingModel).filter(
         RatingModel.user_id == current_user.id,
         RatingModel.course_id == course_id
     ).first()
     if rating:
         return {"can_rate": False, "reason": "Already rated"}
-
-    # 3. Completed?
     if is_course_completed(db, current_user.id, course_id):
         return {"can_rate": True, "reason": "Eligible"}
     else:

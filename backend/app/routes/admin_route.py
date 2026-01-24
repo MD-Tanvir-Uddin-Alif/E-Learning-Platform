@@ -111,37 +111,28 @@ def delete_category(
 
 
 
-
+# -------------------------------
+# Block User
+# -------------------------------
 @router.put("/users/{user_id}/block")
 async def block_user(
     user_id: int,
     db: Session = Depends(get_db),
     admin_user: UserModel = Depends(admin_required)
 ):
-    """
-    Block a user. 
-    1. Prevents login.
-    2. Sends notification email.
-    """
-    
-    # 1. Find the user to block
     user_to_block = db.query(UserModel).filter(UserModel.id == user_id).first()
     if not user_to_block:
         raise HTTPException(status_code=404, detail="User not found")
     
-    # 2. Prevent blocking yourself
     if user_to_block.id == admin_user.id:
         raise HTTPException(status_code=400, detail="You cannot block yourself")
 
-    # 3. Check if already blocked
     if user_to_block.is_blocked:
         return {"message": "User is already blocked"}
 
-    # 4. Block user
     user_to_block.is_blocked = True
     db.commit()
     
-    # 5. Send Email
     try:
         await send_blocked_notification_email(user_to_block.email)
     except Exception as e:
@@ -150,14 +141,16 @@ async def block_user(
     return {"message": f"User {user_to_block.first_name} has been blocked successfully."}
 
 
+
+# -------------------------------
+# Unblock User
+# -------------------------------
 @router.put("/users/{user_id}/unblock")
 async def unblock_user(
     user_id: int,
     db: Session = Depends(get_db),
     admin_user: UserModel = Depends(admin_required)
 ):
-    """Unblock a user"""
-    
     user_to_unblock = db.query(UserModel).filter(UserModel.id == user_id).first()
     if not user_to_unblock:
         raise HTTPException(status_code=404, detail="User not found")
@@ -176,21 +169,15 @@ async def unblock_user(
     return {"message": f"User {user_to_unblock.first_name} has been unblocked."}
 
 
-
+# -------------------------------
+# Admin Earning
+# -------------------------------
 @router.get("/analytics/earnings")
 def get_admin_earnings(
     db: Session = Depends(get_db),
     admin_user: UserModel = Depends(admin_required)
 ):
-    """
-    Admin Dashboard:
-    - Total Gross Revenue (100%)
-    - Admin Net Revenue (25%)
-    - Total Instructor Payouts (75%)
-    - All Transaction History
-    """
-    
-    # 1. Fetch all COMPLETED payments
+
     payments = db.query(PaymentModel).filter(
         PaymentModel.status == "completed"
     ).all()
@@ -201,11 +188,9 @@ def get_admin_earnings(
     for p in payments:
         total_gross_revenue += p.amount
         
-        # Get course title
         course = db.query(CourseModel).filter(CourseModel.id == p.course_id).first()
         course_title = course.title if course else "Unknown Course"
         
-        # Get instructor info
         instructor_name = "Unknown"
         if course:
             inst = db.query(UserModel).filter(UserModel.id == course.instructor_id).first()
@@ -222,7 +207,6 @@ def get_admin_earnings(
             "instructor_share": p.amount * 0.75
         })
 
-    # 2. Calculate Splits
     admin_net_revenue = total_gross_revenue * 0.25
     instructor_payouts = total_gross_revenue * 0.75
 

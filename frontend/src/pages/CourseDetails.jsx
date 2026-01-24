@@ -140,10 +140,10 @@ export default function CourseDetail() {
                 <span className="material-symbols-outlined" style={{ color: '#FF6D1F' }}>star</span>
                 <span>{course.rating > 0 ? course.rating : 'New'} ({course.total_ratings || 0} reviews)</span>
               </div>
-              <div className="flex items-center gap-1.5">
+              {/* <div className="flex items-center gap-1.5">
                 <span className="material-symbols-outlined" style={{ color: '#FF6D1F' }}>group</span>
                 <span>{course.students_count || 0} students</span>
-              </div>
+              </div> */}
               <div className="flex items-center gap-1.5">
                 <span className="material-symbols-outlined" style={{ color: '#FF6D1F' }}>schedule</span>
                 <span>{course.videos?.length || 0} lessons</span>
@@ -353,12 +353,12 @@ export default function CourseDetail() {
             </ul>
 
             <div className="border-t pt-6 mt-2" style={{ borderColor: '#F5E7C6' }}>
-              <h4 className="font-bold text-[#222222] mb-3 text-sm">Secure Payment via:</h4>
+              <h4 className="font-bold text-[#222222] mb-3 text-sm">Secure Payment via</h4>
               <div className="flex gap-2 opacity-60 grayscale hover:grayscale-0 transition-all cursor-pointer">
                 {/* Mock Icons */}
-                <div className="h-6 w-10 rounded bg-white shadow-sm bg-cover" style={{ backgroundColor: '#FAF3E1', border: '1px solid #F5E7C6' }} title="Visa"></div>
-                <div className="h-6 w-10 rounded bg-white shadow-sm bg-cover" style={{ backgroundColor: '#FAF3E1', border: '1px solid #F5E7C6' }} title="Mastercard"></div>
-                <div className="h-6 w-10 rounded bg-white shadow-sm bg-cover" style={{ backgroundColor: '#FAF3E1', border: '1px solid #F5E7C6' }} title="PayPal"></div>
+                {/* <div className="h-6 w-10 rounded bg-white shadow-sm bg-cover" style={{ backgroundColor: '#FAF3E1', border: '1px solid #F5E7C6' }} title="bkash"></div> */}
+                {/* <div className="h-6 w-10 rounded bg-white shadow-sm bg-cover" style={{ backgroundColor: '#FAF3E1', border: '1px solid #F5E7C6' }} title="Mastercard"></div> */}
+                {/* <div className="h-6 w-10 rounded bg-white shadow-sm bg-cover" style={{ backgroundColor: '#FAF3E1', border: '1px solid #F5E7C6' }} title="PayPal"></div> */}
               </div>
             </div>
           </div>

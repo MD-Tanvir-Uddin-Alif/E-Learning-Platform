@@ -41,14 +41,7 @@ def get_all_categories(db: Session = Depends(get_db)):
 def get_public_courses(
     db: Session = Depends(get_db)
 ):
-    """
-    Fetch all published courses with:
-    - Instructor Details
-    - Category Name
-    - Calculated Average Rating
-    """
     
-    # We use a specific query to join tables and aggregate ratings efficiently
     courses_query = db.query(
         CourseModel,
         CategoryModel.name.label("category_name"),
@@ -64,7 +57,7 @@ def get_public_courses(
     ).outerjoin(
         RatingModel, CourseModel.id == RatingModel.course_id
     ).filter(
-        CourseModel.is_published == True # Only show published courses
+        CourseModel.is_published == True 
     ).group_by(
         CourseModel.id, CategoryModel.id, UserModel.id
     ).all()
@@ -77,7 +70,7 @@ def get_public_courses(
             "title": course.title,
             "sub_title": course.sub_title,
             "category": cat_name,
-            "rating": round(avg_rating, 1), # Round to 1 decimal (e.g., 4.5)
+            "rating": round(avg_rating, 1), 
             "total_ratings": count,
             "image_url": course.image_url,
             "instructor_id": course.instructor_id,
@@ -93,20 +86,15 @@ def get_public_courses(
     }
 
 
+# -------------------------------
+# Get Course Details
+# -------------------------------
 @router.get("/courses/{course_id}")
 def get_public_course_details(
     course_id: int,
     db: Session = Depends(get_db)
 ):
-    """
-    Fetch details of a single published course including:
-    - Instructor Info (with Headline)
-    - Category Name
-    - List of Videos
-    - Ratings and Reviews
-    """
     
-    # Query Course + Instructor + Category
     course_data = db.query(
         CourseModel,
         CategoryModel.name.label("category_name"),
@@ -120,7 +108,7 @@ def get_public_course_details(
         CategoryModel, CourseModel.category_id == CategoryModel.id
     ).filter(
         CourseModel.id == course_id,
-        CourseModel.is_published == True # Ensure it's public
+        CourseModel.is_published == True 
     ).first()
 
     if not course_data:
@@ -128,7 +116,6 @@ def get_public_course_details(
 
     course, cat_name, fname, lname, p_image, headline = course_data
 
-    # --- Fetch Ratings & Calculate Average ---
     ratings = db.query(RatingModel).filter(RatingModel.course_id == course_id).all()
     
     total_ratings = len(ratings)
@@ -137,7 +124,6 @@ def get_public_course_details(
     if total_ratings > 0:
         average_rating = round(sum(r.rating for r in ratings) / total_ratings, 1)
 
-    # Build Reviews List
     reviews = []
     for r in ratings:
         reviews.append({
@@ -149,7 +135,6 @@ def get_public_course_details(
             "created_at": r.created_at
         })
 
-    # Sort videos by order
     videos_sorted = sorted(course.videos, key=lambda v: v.order if v.order else 0)
 
     return {
@@ -161,8 +146,8 @@ def get_public_course_details(
         "price": course.price if course.is_paid else 0.0,
         "image_url": course.image_url,
         "category": cat_name,
-        "rating": average_rating,       # Added
-        "total_ratings": total_ratings, # Added
+        "rating": average_rating,       
+        "total_ratings": total_ratings, 
         "instructor_id": course.instructor_id,
         "instructor_name": f"{fname} {lname}",
         "instructor_image": p_image,
@@ -175,5 +160,5 @@ def get_public_course_details(
             }
             for v in videos_sorted
         ],
-        "reviews": reviews # Added
+        "reviews": reviews 
     }
