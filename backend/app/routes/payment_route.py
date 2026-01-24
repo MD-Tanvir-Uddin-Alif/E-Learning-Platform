@@ -50,9 +50,16 @@ def initiate_payment(
             status_code=403, 
             detail="Admins cannot purchase courses. Please register as a student to buy courses."
         )
+    
     course = db.query(CourseModel).filter(CourseModel.id == course_id).first()
     if not course:
         raise HTTPException(status_code=404, detail="Course not found")
+    
+    if course.instructor_id == current_user.id:
+        raise HTTPException(
+            status_code=403,
+            detail="You cannot purchase your own course."
+        )
 
     existing_enrollment = db.query(EnrollmentModel).filter(
         EnrollmentModel.user_id == current_user.id,
