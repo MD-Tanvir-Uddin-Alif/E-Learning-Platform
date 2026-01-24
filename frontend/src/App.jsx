@@ -65,7 +65,7 @@ const router = createBrowserRouter([
       </ProtectedRoute>
     ),
     children: [
-      { path: 'dashboard', element: <div className="p-10 text-2xl font-bold">Dashboard Home</div> }, 
+      { path: 'dashboard', element: <div className="min-h-screen flex items-center justify-center text-2xl font-bold">Dashboard Home</div> }, 
       // admin path
       { path: 'users', element: <UserTable /> },
       { path: 'add-category', element: <AddCategory />},
