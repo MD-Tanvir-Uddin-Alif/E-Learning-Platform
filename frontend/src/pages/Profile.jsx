@@ -465,7 +465,7 @@ const Profile = () => {
                     />
                   </div>
                   <button
-                    className="w-full mt-2 py-2.5 rounded-lg border-2 font-bold hover:bg-[#FF6D1F] hover:text-white transition-all disabled:opacity-50"
+                    className="w-full mt-2 py-2.5 rounded-lg border-2 font-bold hover:text-white transition-all disabled:opacity-50"
                     style={{ borderColor: '#FF6D1F', color: '#FF6D1F' }}
                     type="button"
                     onClick={handleUpdatePassword}
